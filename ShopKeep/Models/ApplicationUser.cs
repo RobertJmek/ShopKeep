@@ -11,16 +11,25 @@ namespace ShopKeep.Models
     {
         [Required]
         [StringLength(100)]
-        public string FullName { get; set; }
+        [Display(Name = "Nume complet")]
+        public required string FullName { get; set; }
 
         [DataType(DataType.Date)]
+        [Display(Name = "Data nașterii")]
         public DateTime DateOfBirth { get; set; }
 
         [StringLength(300)]
-        public string Address { get; set; }
+        [Display(Name = "Adresă")]
+        public string? Address { get; set; }
 
         [Phone]
-        public string AlternatePhoneNumber { get; set; }
-        
+        [Display(Name = "Telefon alternativ")]
+        public string? AlternatePhoneNumber { get; set; }
+
+        public virtual ICollection<Product>? ProposedProducts { get; set; }
+        public virtual ICollection<Review>? Reviews { get; set; }
+        public virtual ICollection<ShoppingCartItem>? ShoppingCartItems { get; set; }
+        public virtual ICollection<WishlistItem>? WishlistItems { get; set; }
+        public virtual ICollection<Order>? Orders { get; set; }
     }
 }
