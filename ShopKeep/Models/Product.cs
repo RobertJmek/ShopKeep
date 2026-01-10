@@ -43,6 +43,9 @@ namespace ShopKeep.Models
         [Display(Name = "Rating mediu")]
         public double AverageRating { get; set; } = 0;
 
+        // Status (ex: Draft/Pending/Approved etc.)
+        public int Status { get; set; }
+
 
         // Feedback de la administrator
         [StringLength(500)]

@@ -101,9 +101,11 @@ namespace ShopKeep.Migrations
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
                     b.Property<string>("LoginProvider")
+                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("ProviderKey")
+                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("ProviderDisplayName")
@@ -141,9 +143,11 @@ namespace ShopKeep.Migrations
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("LoginProvider")
+                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("Name")
+                        .HasMaxLength(255)
                         .HasColumnType("varchar(255)");
 
                     b.Property<string>("Value")
