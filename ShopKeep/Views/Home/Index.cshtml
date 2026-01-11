@@ -1,8 +1,238 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Acasă";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<!-- Hero Section -->
+<div class="bg-primary text-white py-5 mb-5 rounded-3 shadow-lg">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h1 class="display-3 fw-bold mb-3">
+                    <i class="bi bi-shop"></i> Bun venit la ShopKeep
+                </h1>
+                <p class="lead mb-4">
+                    Magazinul tău online pentru toate nevoile tale! 
+                    Descoperă o gamă variată de produse de calitate la prețuri competitive.
+                </p>
+                <div class="d-flex gap-3">
+                    <a asp-controller="Category" asp-action="Index" class="btn btn-light btn-lg shadow">
+                        <i class="bi bi-tags-fill"></i> Explorează Categoriile
+                    </a>
+                    <a asp-controller="Product" asp-action="Index" class="btn btn-outline-light btn-lg">
+                        <i class="bi bi-box-seam"></i> Vezi Produsele
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-4 text-center d-none d-lg-block">
+                <i class="bi bi-cart-check display-1"></i>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Statistics Cards -->
+<div class="container mb-5">
+    <div class="row g-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex p-3 mb-3">
+                        <i class="bi bi-tags-fill fs-1 text-primary"></i>
+                    </div>
+                    <h3 class="fw-bold mb-1">@ViewBag.TotalCategories</h3>
+                    <p class="text-muted mb-0">Categorii Disponibile</p>
+                    <a asp-controller="Category" asp-action="Index" class="stretched-link text-decoration-none"></a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex p-3 mb-3">
+                        <i class="bi bi-box-seam fs-1 text-success"></i>
+                    </div>
+                    <h3 class="fw-bold mb-1">@ViewBag.TotalProducts</h3>
+                    <p class="text-muted mb-0">Produse în Catalog</p>
+                    <a asp-controller="Product" asp-action="Index" class="stretched-link text-decoration-none"></a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="rounded-circle bg-warning bg-opacity-10 d-inline-flex p-3 mb-3">
+                        <i class="bi bi-truck fs-1 text-warning"></i>
+                    </div>
+                    <h3 class="fw-bold mb-1">@ViewBag.TotalOrders</h3>
+                    <p class="text-muted mb-0">Comenzi Procesate</p>
+                    <a asp-controller="Order" asp-action="Index" class="stretched-link text-decoration-none"></a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body text-center">
+                    <div class="rounded-circle bg-info bg-opacity-10 d-inline-flex p-3 mb-3">
+                        <i class="bi bi-people-fill fs-1 text-info"></i>
+                    </div>
+                    <h3 class="fw-bold mb-1">@ViewBag.TotalUsers</h3>
+                    <p class="text-muted mb-0">Clienți Mulțumiți</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Categories Section -->
+@if (ViewBag.RecentCategories != null && ((List<ShopKeep.Models.Category>)ViewBag.RecentCategories).Any())
+{
+    <div class="container mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold mb-1">
+                    <i class="bi bi-tags text-primary"></i> Categorii Populare
+                </h2>
+                <p class="text-muted mb-0">Explorează cele mai noi categorii de produse</p>
+            </div>
+            <a asp-controller="Category" asp-action="Index" class="btn btn-outline-primary">
+                Vezi toate <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+        
+        <div class="row g-3">
+            @foreach (var category in ViewBag.RecentCategories)
+            {
+                <div class="col-md-6 col-lg-3">
+                    <div class="card border-0 shadow-sm h-100 hover-lift">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <span class="badge bg-primary-subtle text-primary fs-6 px-3 py-2">
+                                    @category.Name
+                                </span>
+                                <small class="text-muted">#@category.Id</small>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="bi bi-box"></i> @(category.Products?.Count ?? 0) produse
+                                </small>
+                                <a asp-controller="Category" asp-action="Show" asp-route-id="@category.Id" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> Detalii
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<!-- Featured Products Section -->
+@if (ViewBag.FeaturedProducts != null && ((List<ShopKeep.Models.Product>)ViewBag.FeaturedProducts).Any())
+{
+    <div class="container mb-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold mb-1">
+                    <i class="bi bi-stars text-warning"></i> Produse Noi
+                </h2>
+                <p class="text-muted mb-0">Descoperă ultimele produse din magazin</p>
+            </div>
+            <a asp-controller="Product" asp-action="Index" class="btn btn-outline-success">
+                Vezi toate <i class="bi bi-arrow-right"></i>
+            </a>
+        </div>
+        
+        <div class="row g-4">
+            @foreach (var product in ViewBag.FeaturedProducts)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="card border-0 shadow-sm h-100 hover-lift">
+                        <div class="position-relative">
+                            <img src="@product.ImageUrl" class="card-img-top" alt="@product.Title" 
+                                 style="height: 200px; object-fit: cover;">
+                            @if (product.Stock > 0)
+                            {
+                                <span class="position-absolute top-0 end-0 m-2 badge bg-success">
+                                    <i class="bi bi-check-circle"></i> În stoc
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="position-absolute top-0 end-0 m-2 badge bg-danger">
+                                    <i class="bi bi-x-circle"></i> Stoc epuizat
+                                </span>
+                            }
+                        </div>
+                        <div class="card-body">
+                            <h5 class="card-title text-truncate mb-2">@product.Title</h5>
+                            <p class="card-text text-muted small text-truncate">@product.Description</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="h5 text-primary mb-0">@product.Price.ToString("C2")</span>
+                                <a asp-controller="Product" asp-action="Show" asp-route-id="@product.Id" 
+                                   class="btn btn-sm btn-outline-success">
+                                    <i class="bi bi-eye"></i> Vezi
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<!-- Quick Actions -->
+<div class="container mb-5">
+    <div class="card border-0 shadow-sm bg-light">
+        <div class="card-body p-4">
+            <h3 class="fw-bold mb-4 text-center">
+                <i class="bi bi-lightning-charge-fill text-warning"></i> Cumpără Rapid
+            </h3>
+            <div class="row g-3">
+                <div class="col-md-6 col-lg-3">
+                    <a asp-controller="Category" asp-action="Index" class="btn btn-primary w-100 py-3 shadow-sm">
+                        <i class="bi bi-tags-fill fs-4 d-block mb-2"></i>
+                        Categorii
+                    </a>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <a asp-controller="Product" asp-action="Index" class="btn btn-success w-100 py-3 shadow-sm">
+                        <i class="bi bi-box-seam fs-4 d-block mb-2"></i>
+                        Toate Produsele
+                    </a>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <a href="#" class="btn btn-warning w-100 py-3 shadow-sm">
+                        <i class="bi bi-cart-check fs-4 d-block mb-2"></i>
+                        Coșul Meu
+                    </a>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <a href="#" class="btn btn-info w-100 py-3 shadow-sm">
+                        <i class="bi bi-heart-fill fs-4 d-block mb-2"></i>
+                        Favorite
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Bootstrap Icons and custom styles -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<style>
+    .hover-lift {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    
+    .hover-lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+</style>

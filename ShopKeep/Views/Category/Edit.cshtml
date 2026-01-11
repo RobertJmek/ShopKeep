@@ -1,0 +1,116 @@
+@model ShopKeep.Models.Category
+
+@{
+    ViewData["Title"] = "Editează Categoria";
+}
+
+<div class="container my-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Categorii</a></li>
+            <li class="breadcrumb-item"><a asp-action="Show" asp-route-id="@Model.Id">@Model.Name</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Editează</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-warning text-dark py-3">
+                    <h4 class="mb-0">
+                        <i class="bi bi-pencil-square"></i> Editează Categoria
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="Edit" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                        
+                        <div class="mb-3">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted">ID Categorie</small>
+                                <div class="fw-bold">#@Model.Id</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label asp-for="Name" class="form-label fw-bold">
+                                <i class="bi bi-tag"></i> Nume Categorie
+                                <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Name" 
+                                   class="form-control form-control-lg" 
+                                   placeholder="Ex: Electronice, Îmbrăcăminte, Cărți..." 
+                                   autofocus />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i> Modifică numele categoriei (2-50 caractere)
+                            </div>
+                        </div>
+
+                        @if (Model.Products != null && Model.Products.Any())
+                        {
+                            <div class="alert alert-info d-flex align-items-start">
+                                <i class="bi bi-info-circle fs-4 me-3"></i>
+                                <div>
+                                    <strong>Atenție:</strong> Această categorie conține @Model.Products.Count produse. 
+                                    Modificarea numelui va afecta toate produsele asociate.
+                                </div>
+                            </div>
+                        }
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="btn-group">
+                                <a asp-action="Index" class="btn btn-outline-secondary btn-lg">
+                                    <i class="bi bi-x-circle"></i> Anulează
+                                </a>
+                                <a asp-action="Show" asp-route-id="@Model.Id" class="btn btn-outline-info btn-lg">
+                                    <i class="bi bi-eye"></i> Vezi Detalii
+                                </a>
+                            </div>
+                            <button type="submit" class="btn btn-warning btn-lg px-5">
+                                <i class="bi bi-save"></i> Salvează Modificările
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            @if (Model.Products != null && Model.Products.Any())
+            {
+                <div class="card border-0 bg-light mt-3">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-3">
+                            <i class="bi bi-box-seam"></i> Produse în această categorie
+                        </h6>
+                        <div class="row row-cols-1 row-cols-md-2 g-2">
+                            @foreach (var product in Model.Products.Take(6))
+                            {
+                                <div class="col">
+                                    <div class="d-flex align-items-center p-2 bg-white rounded small">
+                                        <i class="bi bi-box text-primary me-2"></i>
+                                        <span class="text-truncate">@product.Title</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        @if (Model.Products.Count > 6)
+                        {
+                            <div class="text-center mt-2">
+                                <small class="text-muted">și încă @(Model.Products.Count - 6) produse...</small>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Add Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

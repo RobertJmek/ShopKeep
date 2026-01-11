@@ -4,17 +4,33 @@ using ShopKeep.Models;
 
 namespace ShopKeep.Controllers;
 
-public class HomeController : Controller
+public class HomeController(ILogger<HomeController> logger, AppDbContext context) : Controller
 {
-    private readonly ILogger<HomeController> _logger;
-
-    public HomeController(ILogger<HomeController> logger)
-    {
-        _logger = logger;
-    }
+    private readonly ILogger<HomeController> _logger = logger;
+    private readonly AppDbContext db = context;
 
     public IActionResult Index()
     {
+        // Get statistics for dashboard
+        ViewBag.TotalCategories = db.Categories.Count();
+        ViewBag.TotalProducts = db.Products.Count();
+        ViewBag.TotalOrders = db.Orders.Count();
+        ViewBag.TotalUsers = db.Users.Count();
+        
+        // Get recent categories
+        var recentCategories = db.Categories
+            .OrderByDescending(c => c.Id)
+            .Take(4)
+            .ToList();
+        ViewBag.RecentCategories = recentCategories;
+        
+        // Get featured products
+        var featuredProducts = db.Products
+            .OrderByDescending(p => p.Id)
+            .Take(6)
+            .ToList();
+        ViewBag.FeaturedProducts = featuredProducts;
+
         return View();
     }
 

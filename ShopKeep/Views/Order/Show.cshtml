@@ -1,0 +1,160 @@
+@model ShopKeep.Models.Order
+
+@{
+    ViewData["Title"] = $"Comanda #{Model.Id}";
+}
+
+<div class="container my-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Comenzi</a></li>
+            <li class="breadcrumb-item active" aria-current="page">#@Model.Id</li>
+        </ol>
+    </nav>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-receipt"></i> Detalii comandă</h5>
+                        <span class="badge bg-secondary">@Model.Status</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted d-block">Data</small>
+                                <strong>@Model.OrderDate.ToString("dd MMM yyyy, HH:mm")</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted d-block">Total</small>
+                                <strong class="text-success">@Model.TotalAmount.ToString("C2")</strong>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted d-block">Adresă livrare</small>
+                                <strong>@(string.IsNullOrWhiteSpace(Model.DeliveryAddress) ? "—" : Model.DeliveryAddress)</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h6 class="fw-bold mb-2"><i class="bi bi-box-seam"></i> Produse</h6>
+
+                    @if (Model.OrderItems != null && Model.OrderItems.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Produs</th>
+                                        <th class="text-end">Preț</th>
+                                        <th class="text-center">Cantitate</th>
+                                        <th class="text-end">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var item in Model.OrderItems)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">@item.Product?.Title</div>
+                                            <div class="text-muted small">#@item.ProductId</div>
+                                        </td>
+                                        <td class="text-end">@item.UnitPrice.ToString("C2")</td>
+                                        <td class="text-center">@item.Quantity</td>
+                                        <td class="text-end fw-semibold">@item.Subtotal.ToString("C2")</td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-light border">Nu există produse pe această comandă.</div>
+                    }
+
+                    <div class="d-flex justify-content-end">
+                        <div class="p-3 bg-light rounded" style="min-width: 260px;">
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Total</span>
+                                <strong class="text-success">@Model.TotalAmount.ToString("C2")</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3"><i class="bi bi-gear"></i> Acțiuni</h6>
+
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <form asp-action="UpdateStatus" method="post" class="mb-3">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="status">
+                                <option value="Plasată" selected="@(Model.Status == "Plasată")">Plasată</option>
+                                <option value="În procesare" selected="@(Model.Status == "În procesare")">În procesare</option>
+                                <option value="Expediată" selected="@(Model.Status == "Expediată")">Expediată</option>
+                                <option value="Livrată" selected="@(Model.Status == "Livrată")">Livrată</option>
+                                <option value="Anulată" selected="@(Model.Status == "Anulată")">Anulată</option>
+                            </select>
+                            <button type="submit" class="btn btn-primary w-100 mt-2">
+                                <i class="bi bi-save"></i> Actualizează status
+                            </button>
+                        </form>
+
+                        <button type="button" class="btn btn-danger w-100" data-bs-toggle="modal" data-bs-target="#deleteOrderModal">
+                            <i class="bi bi-trash"></i> Șterge comanda
+                        </button>
+                    }
+                    else
+                    {
+                        <div class="alert alert-light border mb-3">
+                            <i class="bi bi-lock"></i> Doar administratorul poate modifica o comandă.
+                        </div>
+                    }
+
+                    <a asp-action="Index" class="btn btn-outline-secondary w-100 mt-3">
+                        <i class="bi bi-arrow-left"></i> Înapoi la comenzi
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (User.IsInRole("Admin"))
+{
+    <div class="modal fade" id="deleteOrderModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle"></i> Confirmare</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    Ești sigur că vrei să ștergi comanda <strong>#@Model.Id</strong>?
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulează</button>
+                    <form asp-action="Delete" method="post">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <button type="submit" class="btn btn-danger">Șterge</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">

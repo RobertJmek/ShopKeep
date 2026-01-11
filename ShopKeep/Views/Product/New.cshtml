@@ -1,0 +1,139 @@
+@model ShopKeep.Models.Product
+
+@{
+    ViewData["Title"] = "Adaugă Produs";
+}
+
+<div class="container my-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Produse</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Adaugă Produs Nou</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-success text-white py-3">
+                    <h4 class="mb-0">
+                        <i class="bi bi-plus-circle"></i> Adaugă Produs Nou
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="New" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                        
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label asp-for="Title" class="form-label fw-bold">
+                                    <i class="bi bi-text-left"></i> Titlu Produs
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="Title" 
+                                       class="form-control form-control-lg" 
+                                       placeholder="Ex: Laptop Dell Inspiron 15" 
+                                       autofocus />
+                                <span asp-validation-for="Title" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-4">
+                                <label asp-for="CategoryId" class="form-label fw-bold">
+                                    <i class="bi bi-tag"></i> Categorie
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <select asp-for="CategoryId" 
+                                        asp-items="@ViewBag.Categories" 
+                                        class="form-select form-select-lg">
+                                    <option value="">Selectează categoria</option>
+                                </select>
+                                <span asp-validation-for="CategoryId" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Description" class="form-label fw-bold">
+                                    <i class="bi bi-card-text"></i> Descriere
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <textarea asp-for="Description" 
+                                          class="form-control" 
+                                          rows="4"
+                                          placeholder="Descrie detaliat produsul..."></textarea>
+                                <span asp-validation-for="Description" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="ImageUrl" class="form-label fw-bold">
+                                    <i class="bi bi-image"></i> URL Imagine
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="ImageUrl" 
+                                       class="form-control" 
+                                       placeholder="https://example.com/imagine-produs.jpg" />
+                                <span asp-validation-for="ImageUrl" class="text-danger small"></span>
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i> Introdu URL-ul complet către imaginea produsului
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Price" class="form-label fw-bold">
+                                    <i class="bi bi-currency-dollar"></i> Preț (RON)
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="Price" 
+                                       type="number" 
+                                       step="0.01"
+                                       class="form-control form-control-lg" 
+                                       placeholder="99.99" />
+                                <span asp-validation-for="Price" class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Stock" class="form-label fw-bold">
+                                    <i class="bi bi-box"></i> Stoc
+                                    <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="Stock" 
+                                       type="number" 
+                                       class="form-control form-control-lg" 
+                                       placeholder="10" />
+                                <span asp-validation-for="Stock" class="text-danger small"></span>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info d-flex align-items-start mt-4">
+                            <i class="bi bi-lightbulb fs-4 me-3"></i>
+                            <div>
+                                <strong>Sfaturi:</strong>
+                                <ul class="mb-0 small mt-2">
+                                    <li>Alege un titlu descriptiv și atractiv</li>
+                                    <li>Descrie clar caracteristicile produsului</li>
+                                    <li>Folosește o imagine de calitate</li>
+                                    <li>Setează un preț competitiv</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a asp-action="Index" class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-x-circle"></i> Anulează
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg px-5">
+                                <i class="bi bi-check-circle"></i> Salvează Produsul
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

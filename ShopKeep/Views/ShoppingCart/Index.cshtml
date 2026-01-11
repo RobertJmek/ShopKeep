@@ -1,0 +1,119 @@
+@{
+    ViewData["Title"] = "Coș";
+}
+
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h1 class="h3 mb-1"><i class="bi bi-cart"></i> Coșul meu</h1>
+            <p class="text-muted mb-0">Revizuiește produsele înainte de finalizare</p>
+        </div>
+    </div>
+
+    @if (ViewBag.message != null)
+    {
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="bi bi-info-circle"></i> <strong>@ViewBag.message</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (ViewBag.CartItems != null && ((IEnumerable<ShopKeep.Models.ShoppingCartItem>)ViewBag.CartItems).Any())
+    {
+        var cartItems = (IEnumerable<ShopKeep.Models.ShoppingCartItem>)ViewBag.CartItems;
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0">
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-3">Produs</th>
+                                    <th class="text-end">Preț</th>
+                                    <th class="text-center" style="width: 200px;">Cantitate</th>
+                                    <th class="text-end">Subtotal</th>
+                                    <th class="text-end pe-3">Acțiuni</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var item in cartItems)
+                            {
+                                <tr>
+                                    <td class="ps-3">
+                                        <div class="fw-semibold">@item.Product?.Title</div>
+                                        <div class="text-muted small">@item.Product?.Category?.Name</div>
+                                    </td>
+                                    <td class="text-end">@((item.Product?.Price ?? 0).ToString("C2"))</td>
+                                    <td class="text-center">
+                                        <form asp-action="UpdateQuantity" method="post" class="d-flex justify-content-center gap-2">
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <input type="number" name="quantity" value="@item.Quantity" min="1" class="form-control form-control-sm" style="max-width: 90px;" />
+                                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-arrow-repeat"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                    <td class="text-end fw-semibold">@item.Subtotal.ToString("C2")</td>
+                                    <td class="text-end pe-3">
+                                        <form asp-action="Remove" method="post" class="d-inline">
+                                            <input type="hidden" name="id" value="@item.Id" />
+                                            <button class="btn btn-sm btn-outline-danger" type="submit">
+                                                <i class="bi bi-trash"></i> Elimină
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-3">
+                    <form asp-action="Clear" method="post">
+                        <button type="submit" class="btn btn-outline-danger">
+                            <i class="bi bi-x-circle"></i> Golește coșul
+                        </button>
+                    </form>
+                    <a asp-controller="Product" asp-action="Index" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Continuă cumpărăturile
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-receipt"></i> Rezumat</h5>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Total</span>
+                            <strong class="text-success">@(((decimal)ViewBag.TotalAmount).ToString("C2"))</strong>
+                        </div>
+
+                        <hr />
+
+                        <form asp-action="Checkout" method="post">
+                            <label class="form-label">Adresă de livrare</label>
+                            <textarea name="deliveryAddress" class="form-control" rows="3" placeholder="Strada, număr, oraș..."></textarea>
+                            <button type="submit" class="btn btn-success w-100 mt-3">
+                                <i class="bi bi-bag-check"></i> Plasează comanda
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-light border shadow-sm">
+            <i class="bi bi-cart-x"></i> Coșul este gol.
+        </div>
+        <a asp-controller="Product" asp-action="Index" class="btn btn-success">
+            <i class="bi bi-box-seam"></i> Vezi produse
+        </a>
+    }
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">

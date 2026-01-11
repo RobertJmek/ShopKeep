@@ -1,0 +1,263 @@
+@model ShopKeep.Models.Product
+
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ShopKeep.Models.ApplicationUser> SignInManager
+@inject UserManager<ShopKeep.Models.ApplicationUser> UserManager
+
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<div class="container my-4">
+    @if (TempData["message"] != null)
+    {
+        <div class="alert alert-info alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-info-circle"></i> <strong>@TempData["message"]</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Produse</a></li>
+            <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0 mb-4 sticky-top" style="top: 20px;">
+                <img src="@Model.ImageUrl" class="card-img-top" alt="@Model.Title" 
+                     style="height: 400px; object-fit: cover;"
+                     onerror="this.src='https://via.placeholder.com/400x400?text=No+Image'">
+                <div class="card-body">
+                    @if (Model.IsInStock)
+                    {
+                        <div class="alert alert-success mb-0">
+                            <i class="bi bi-check-circle-fill"></i> <strong>Disponibil în stoc</strong> - @Model.Stock bucăți
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-danger mb-0">
+                            <i class="bi bi-x-circle-fill"></i> <strong>Stoc epuizat</strong>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start mb-3">
+                        <div>
+                            <span class="badge bg-primary-subtle text-primary mb-2">@Model.Category?.Name</span>
+                            <h1 class="display-6 fw-bold mb-2">@Model.Title</h1>
+                            <small class="text-muted">ID Produs: #@Model.Id</small>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <h2 class="text-success fw-bold display-4">@Model.Price.ToString("C2")</h2>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5 class="fw-bold mb-3">
+                            <i class="bi bi-card-text"></i> Descriere
+                        </h5>
+                        <p class="text-muted">@Model.Description</p>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted d-block mb-1">
+                                    <i class="bi bi-box"></i> Stoc disponibil
+                                </small>
+                                <strong class="fs-5">@Model.Stock bucăți</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="p-3 bg-light rounded">
+                                <small class="text-muted d-block mb-1">
+                                    <i class="bi bi-tag"></i> Categorie
+                                </small>
+                                <strong class="fs-5">@Model.Category?.Name</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (User?.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="d-grid gap-2">
+                            <form asp-controller="ShoppingCart" asp-action="Add" method="post">
+                                <input type="hidden" name="productId" value="@Model.Id" />
+                                <input type="hidden" name="quantity" value="1" />
+                                <button type="submit" class="btn btn-success btn-lg" @(Model.IsInStock ? "" : "disabled")>
+                                    <i class="bi bi-cart-plus"></i> Adaugă în coș
+                                </button>
+                            </form>
+
+                            <form asp-controller="Wishlist" asp-action="Add" method="post">
+                                <input type="hidden" name="productId" value="@Model.Id" />
+                                <button type="submit" class="btn btn-outline-danger btn-lg">
+                                    <i class="bi bi-heart"></i> Adaugă la favorite
+                                </button>
+                            </form>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-light border shadow-sm">
+                            <div class="d-flex align-items-start gap-2">
+                                <i class="bi bi-lock fs-4"></i>
+                                <div>
+                                    <div class="fw-semibold">Autentifică-te ca să cumperi sau să salvezi favorite.</div>
+                                    <div class="small text-muted">După login te întorci automat la produs.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <a class="btn btn-success btn-lg w-100"
+                           asp-area="Identity" asp-page="/Account/Login"
+                           asp-route-returnUrl="@Url.Action("Show", "Product", new { id = Model.Id })">
+                            <i class="bi bi-box-arrow-in-right"></i> Autentificare
+                        </a>
+                    }
+                </div>
+            </div>
+
+            @if (User?.Identity?.IsAuthenticated == true && (User.IsInRole("Admin") || User.IsInRole("Editor")))
+            {
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-body">
+                        <h5 class="fw-bold mb-3">
+                            <i class="bi bi-gear"></i> Acțiuni Administrare
+                        </h5>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                                <i class="bi bi-pencil"></i> Editează Produsul
+                            </a>
+                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                <i class="bi bi-trash"></i> Șterge Produsul
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Înapoi la Catalog
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="bi bi-chat-left-text"></i> Lasă un review
+                    </h5>
+                </div>
+                <div class="card-body">
+                    @if (User?.Identity?.IsAuthenticated == true)
+                    {
+                        <form asp-controller="Review" asp-action="Add" method="post">
+                            <input type="hidden" name="productId" value="@Model.Id" />
+
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold">Rating (1-5)</label>
+                                    <select class="form-select" name="rating">
+                                        <option value="">Fără rating</option>
+                                        <option value="1">1</option>
+                                        <option value="2">2</option>
+                                        <option value="3">3</option>
+                                        <option value="4">4</option>
+                                        <option value="5">5</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="form-label fw-semibold">Comentariu</label>
+                                    <textarea class="form-control" name="text" rows="3" placeholder="Cum ți s-a părut produsul?"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end mt-3">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-send"></i> Trimite review
+                                </button>
+                            </div>
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="alert alert-light border mb-0">
+                            <i class="bi bi-lock"></i> Autentifică-te pentru a lăsa un review.
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @if (Model.Reviews != null && Model.Reviews.Any())
+            {
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">
+                            <i class="bi bi-star-fill text-warning"></i> Recenzii (@Model.ReviewCount)
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="list-group list-group-flush">
+                            @foreach (var review in Model.Reviews.OrderByDescending(r => r.CreatedAt))
+                            {
+                                <div class="list-group-item px-0">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <div>
+                                            <strong>@review.User?.FullName</strong>
+                                            <div class="text-warning">
+                                                @for (int i = 1; i <= 5; i++)
+                                                {
+                                                    <i class="bi @(i <= (review.Rating ?? 0) ? "bi-star-fill" : "bi-star")"></i>
+                                                }
+                                            </div>
+                                        </div>
+                                        <small class="text-muted">@review.CreatedAt.ToString("dd MMM yyyy")</small>
+                                    </div>
+                                    <p class="mb-0 text-muted">@review.Text</p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+@if (User?.Identity?.IsAuthenticated == true && (User.IsInRole("Admin") || User.IsInRole("Editor")))
+{
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-exclamation-triangle"></i> Confirmare Ștergere
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Ești sigur că vrei să ștergi produsul <strong>"@Model.Title"</strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulează</button>
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Șterge Produs
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+}
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">

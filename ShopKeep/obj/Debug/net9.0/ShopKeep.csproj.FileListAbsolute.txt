@@ -114,7 +114,6 @@
 /Users/robertjmek/Desktop/UNI/DAW/ShopKeep/ShopKeep/obj/Debug/net9.0/scopedcss/Views/Shared/_Layout.cshtml.rz.scp.css
 /Users/robertjmek/Desktop/UNI/DAW/ShopKeep/ShopKeep/obj/Debug/net9.0/scopedcss/bundle/ShopKeep.styles.css
 /Users/robertjmek/Desktop/UNI/DAW/ShopKeep/ShopKeep/obj/Debug/net9.0/scopedcss/projectbundle/ShopKeep.bundle.scp.css
-/Users/robertjmek/Desktop/UNI/DAW/ShopKeep/ShopKeep/obj/Debug/net9.0/compressed/2fre1uyvs8-b9sayid5wm.gz
 /Users/robertjmek/Desktop/UNI/DAW/ShopKeep/ShopKeep/obj/Debug/net9.0/compressed/ybhbv36z1o-61n19gt1b8.gz
 /Users/robertjmek/Desktop/UNI/DAW/ShopKeep/ShopKeep/obj/Debug/net9.0/compressed/v0djq63hbm-xtxxf3hu2r.gz
 /Users/robertjmek/Desktop/UNI/DAW/ShopKeep/ShopKeep/obj/Debug/net9.0/compressed/77bts0gwas-bqjiyaj88i.gz
@@ -371,3 +370,4 @@
 /Users/robertjmek/Desktop/UNI/DAW/ShopKeep/ShopKeep/bin/Debug/net9.0/tr/Microsoft.CodeAnalysis.Scripting.resources.dll
 /Users/robertjmek/Desktop/UNI/DAW/ShopKeep/ShopKeep/bin/Debug/net9.0/zh-Hans/Microsoft.CodeAnalysis.Scripting.resources.dll
 /Users/robertjmek/Desktop/UNI/DAW/ShopKeep/ShopKeep/bin/Debug/net9.0/zh-Hant/Microsoft.CodeAnalysis.Scripting.resources.dll
+/Users/robertjmek/Desktop/UNI/DAW/ShopKeep/ShopKeep/obj/Debug/net9.0/compressed/2fre1uyvs8-usc2sw6foj.gz

@@ -1,0 +1,85 @@
+@model ShopKeep.Models.Category
+
+@{
+    ViewData["Title"] = "Adaugă Categorie";
+}
+
+<div class="container my-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="Index">Categorii</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Adaugă Categorie Nouă</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0">
+                <div class="card-header bg-success text-white py-3">
+                    <h4 class="mb-0">
+                        <i class="bi bi-plus-circle"></i> Adaugă Categorie Nouă
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="New" method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+                        
+                        <div class="mb-4">
+                            <label asp-for="Name" class="form-label fw-bold">
+                                <i class="bi bi-tag"></i> Nume Categorie
+                                <span class="text-danger">*</span>
+                            </label>
+                            <input asp-for="Name" 
+                                   class="form-control form-control-lg" 
+                                   placeholder="Ex: Electronice, Îmbrăcăminte, Cărți..." 
+                                   autofocus />
+                            <span asp-validation-for="Name" class="text-danger small"></span>
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i> Introduceți un nume descriptiv pentru categorie (2-50 caractere)
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info d-flex align-items-start">
+                            <i class="bi bi-lightbulb fs-4 me-3"></i>
+                            <div>
+                                <strong>Sfat:</strong> Alege un nume scurt și sugestiv care să descrie clar tipul de produse din această categorie.
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a asp-action="Index" class="btn btn-outline-secondary btn-lg">
+                                <i class="bi bi-x-circle"></i> Anulează
+                            </a>
+                            <button type="submit" class="btn btn-success btn-lg px-5">
+                                <i class="bi bi-check-circle"></i> Salvează Categoria
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Help Card -->
+            <div class="card border-0 bg-light mt-3">
+                <div class="card-body">
+                    <h6 class="text-muted mb-2">
+                        <i class="bi bi-question-circle"></i> Ajutor
+                    </h6>
+                    <ul class="small mb-0">
+                        <li>Numele categoriei trebuie să fie unic</li>
+                        <li>Odată creată, vei putea asocia produse cu această categorie</li>
+                        <li>Poți edita sau șterge categoria oricând</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Bootstrap Icons -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
