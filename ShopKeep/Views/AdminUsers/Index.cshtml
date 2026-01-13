@@ -1,0 +1,85 @@
+@model IEnumerable<ShopKeep.Models.AdminUserListItemVM>
+
+@{
+    ViewData["Title"] = "Utilizatori";
+}
+
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h1 class="h3 mb-0">Utilizatori</h1>
+        <a class="btn btn-outline-secondary" asp-controller="Home" asp-action="Index">Înapoi în magazin</a>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(ViewBag.message))
+    {
+        <div class="alert alert-info">@ViewBag.message</div>
+    }
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-striped align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Nume</th>
+                        <th>Email</th>
+                        <th>Roluri</th>
+                        <th>Stare</th>
+                        <th class="text-end">Acțiuni</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @foreach (var u in Model)
+                {
+                    <tr>
+                        <td>
+                            <div class="fw-semibold">@(string.IsNullOrWhiteSpace(u.FullName) ? "(fără nume)" : u.FullName)</div>
+                            <div class="text-muted small">@u.UserName</div>
+                        </td>
+                        <td>@u.Email</td>
+                        <td>
+                            @if (u.Roles != null && u.Roles.Any())
+                            {
+                                <span>@string.Join(", ", u.Roles)</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">(fără)</span>
+                            }
+                        </td>
+                        <td>
+                            @if (u.IsLockedOut)
+                            {
+                                <span class="badge text-bg-danger">Blocat</span>
+                            }
+                            else
+                            {
+                                <span class="badge text-bg-success">Activ</span>
+                            }
+                        </td>
+                        <td class="text-end">
+                            <a class="btn btn-sm btn-outline-primary" asp-action="EditRoles" asp-route-id="@u.Id">Roluri</a>
+
+                            <form class="d-inline" method="post" asp-action="ToggleLock" asp-route-id="@u.Id">
+                                <button type="submit" class="btn btn-sm btn-outline-warning">
+                                    @(u.IsLockedOut ? "Deblochează" : "Blochează")
+                                </button>
+                            </form>
+
+                            <details class="d-inline-block ms-1">
+                                <summary class="btn btn-sm btn-outline-danger">Șterge</summary>
+                                <div class="border rounded p-2 mt-2 bg-light text-start" style="min-width: 260px;">
+                                    <div class="fw-semibold">Sigur vrei să ștergi utilizatorul?</div>
+                                    <div class="small text-muted">Această acțiune nu poate fi anulată.</div>
+                                    <form class="mt-2" method="post" asp-action="Delete" asp-route-id="@u.Id">
+                                        <button type="submit" class="btn btn-sm btn-danger">Da, șterge</button>
+                                    </form>
+                                </div>
+                            </details>
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

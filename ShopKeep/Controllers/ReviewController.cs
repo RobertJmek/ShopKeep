@@ -25,6 +25,13 @@ namespace ShopKeep.Controllers
                 return RedirectToAction("Index", "Product");
             }
 
+            // Nu permitem review-uri pentru produse nepublice
+            if (product.Status != (int)ProductStatus.Approved)
+            {
+                TempData["message"] = "Nu poți adăuga review la un produs care nu este public";
+                return RedirectToAction("Show", "Product", new { id = productId });
+            }
+
             // Verifică dacă userul a mai lăsat review
             var existingReview = db.Reviews
                 .FirstOrDefault(r => r.UserId == userId && r.ProductId == productId);
@@ -61,6 +68,19 @@ namespace ShopKeep.Controllers
             if (review == null)
             {
                 return NotFound();
+            }
+
+            var product = db.Products.Find(review.ProductId);
+            if (product == null)
+            {
+                TempData["message"] = "Produsul nu a fost găsit";
+                return RedirectToAction("Index", "Product");
+            }
+
+            if (product.Status != (int)ProductStatus.Approved)
+            {
+                TempData["message"] = "Nu poți modifica review-ul pentru un produs care nu este public";
+                return RedirectToAction("Show", "Product", new { id = review.ProductId });
             }
 
             review.Rating = rating;

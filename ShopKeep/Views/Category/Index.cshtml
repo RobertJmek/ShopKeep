@@ -6,15 +6,29 @@
 @inject SignInManager<ShopKeep.Models.ApplicationUser> SignInManager
 @inject UserManager<ShopKeep.Models.ApplicationUser> UserManager
 
+@{
+    var isAdmin = SignInManager.IsSignedIn(User) && User.IsInRole("Admin");
+}
+
 <div class="container my-4">
     <div class="row mb-4">
         <div class="col">
-            <h1 class="display-5 fw-bold text-primary">
-                <i class="bi bi-tags-fill"></i> Gestionare Categorii
-            </h1>
-            <p class="text-muted">Administrează categoriile produselor din magazin</p>
+            @if (isAdmin)
+            {
+                <h1 class="display-5 fw-bold text-primary">
+                    <i class="bi bi-tags-fill"></i> Gestionare Categorii
+                </h1>
+                <p class="text-muted">Administrează categoriile produselor din magazin</p>
+            }
+            else
+            {
+                <h1 class="display-5 fw-bold text-primary">
+                    <i class="bi bi-tags-fill"></i> Categorii
+                </h1>
+                <p class="text-muted">Alege o categorie pentru a vedea produsele disponibile</p>
+            }
         </div>
-        @if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
+        @if (isAdmin)
         {
             <div class="col-auto align-self-center">
                 <a asp-action="New" class="btn btn-success btn-lg shadow-sm">
@@ -43,7 +57,7 @@
                                 <th class="ps-4" style="width: 60px;">ID</th>
                                 <th>Nume Categorie</th>
                                 <th style="width: 150px;">Nr. Produse</th>
-                                <th class="text-center" style="width: 250px;">Acțiuni</th>
+                                <th class="text-center" style="width: 250px;">@(isAdmin ? "Acțiuni" : "Navigare")</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -63,59 +77,29 @@
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group" role="group">
-                                            <a asp-action="Show" asp-route-id="@category.Id" 
-                                               class="btn btn-sm btn-outline-info" title="Detalii">
-                                                <i class="bi bi-eye"></i> Detalii
+                                            <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@category.Id"
+                                               class="btn btn-sm btn-outline-success" title="Vezi produse">
+                                                <i class="bi bi-funnel"></i> Produse
                                             </a>
                                             @if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
                                             {
+                                                <a asp-action="Show" asp-route-id="@category.Id" 
+                                                   class="btn btn-sm btn-outline-info" title="Detalii">
+                                                    <i class="bi bi-eye"></i> Detalii
+                                                </a>
                                                 <a asp-action="Edit" asp-route-id="@category.Id" 
                                                    class="btn btn-sm btn-outline-warning" title="Editează">
                                                     <i class="bi bi-pencil"></i> Editează
                                                 </a>
-                                                <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                        data-bs-toggle="modal" data-bs-target="#deleteModal@(category.Id)" 
-                                                    title="Șterge">
-                                                <i class="bi bi-trash"></i> Șterge
-                                            </button>
+                                                <form asp-action="Delete" asp-route-id="@category.Id" method="post" class="d-inline">
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Șterge">
+                                                        <i class="bi bi-trash"></i> Șterge
+                                                    </button>
+                                                </form>
                                             }
                                         </div>
                                     </td>
                                 </tr>
-
-                                <!-- Delete Modal -->
-                                @if (SignInManager.IsSignedIn(User) && User.IsInRole("Admin"))
-                                {
-                                <div class="modal fade" id="deleteModal@(category.Id)" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content">
-                                            <div class="modal-header bg-danger text-white">
-                                                <h5 class="modal-title" id="deleteModalLabel">
-                                                    <i class="bi bi-exclamation-triangle"></i> Confirmare Ștergere
-                                                </h5>
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body">
-                                                <p class="mb-0">Ești sigur că vrei să ștergi categoria <strong>"@category.Name"</strong>?</p>
-                                                @if (category.Products?.Count > 0)
-                                                {
-                                                    <div class="alert alert-warning mt-3 mb-0">
-                                                        <i class="bi bi-exclamation-circle"></i> Această categorie conține @category.Products.Count produse!
-                                                    </div>
-                                                }
-                                            </div>
-                                            <div class="modal-footer">
-                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulează</button>
-                                                <form asp-action="Delete" asp-route-id="@category.Id" method="post" class="d-inline">
-                                                    <button type="submit" class="btn btn-danger">
-                                                        <i class="bi bi-trash"></i> Șterge Categorie
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                }
                             }
                         </tbody>
                     </table>

@@ -1,0 +1,46 @@
+@model ShopKeep.Models.StarRatingVM
+
+@{
+    var hasRatings = Model.RatingCount > 0;
+    var rounded = hasRatings
+        ? Math.Round(Model.Average * 2, MidpointRounding.AwayFromZero) / 2
+        : 0;
+
+    string cls = string.IsNullOrWhiteSpace(Model.CssClass) ? "" : Model.CssClass;
+}
+
+<span class="d-inline-flex align-items-center gap-2 @cls">
+    <span class="text-warning" aria-label="Rating">
+        @for (var i = 1; i <= 5; i++)
+        {
+            if (hasRatings && rounded >= i)
+            {
+                <i class="bi bi-star-fill"></i>
+            }
+            else if (hasRatings && rounded >= i - 0.5)
+            {
+                <i class="bi bi-star-half"></i>
+            }
+            else
+            {
+                <i class="bi bi-star"></i>
+            }
+        }
+    </span>
+
+    @if (!hasRatings)
+    {
+        <span class="text-muted small">Fără rating</span>
+    }
+    else
+    {
+        @if (Model.ShowNumericValue)
+        {
+            <span class="small text-muted">@rounded.ToString("0.0")/5</span>
+        }
+        @if (Model.ShowCount)
+        {
+            <span class="small text-muted">(@Model.RatingCount)</span>
+        }
+    }
+</span>

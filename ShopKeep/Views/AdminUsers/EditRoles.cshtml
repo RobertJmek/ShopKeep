@@ -1,0 +1,71 @@
+@model ShopKeep.Models.AdminEditUserRolesVM
+
+@{
+    ViewData["Title"] = "Roluri utilizator";
+}
+
+<div class="container py-4">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <div>
+            <h1 class="h3 mb-1">Roluri</h1>
+            <div class="text-muted">@Model.Email (@Model.UserName)</div>
+            @if (!string.IsNullOrWhiteSpace(Model.FullName))
+            {
+                <div class="text-muted">@Model.FullName</div>
+            }
+        </div>
+        <a class="btn btn-outline-secondary" asp-action="Index">Înapoi</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <form method="post" asp-action="EditRoles">
+                <input type="hidden" asp-for="Id" />
+
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-danger">
+                        <div class="fw-semibold">Nu am putut salva</div>
+                        <div asp-validation-summary="All"></div>
+                    </div>
+                }
+
+                <div class="mb-3">
+                    <label class="form-label">Selectează rolurile</label>
+                    <div class="d-flex flex-wrap gap-3">
+                        @foreach (var role in Model.AllRoles)
+                        {
+                            var isUserRole = role == "User";
+                            var isSuperAdmin = !string.IsNullOrWhiteSpace(Model.Email)
+                                && Model.Email.Equals("admin@shopkeep.com", StringComparison.OrdinalIgnoreCase);
+                            var isProtectedAdminRole = isSuperAdmin && role == "Admin";
+                            var isChecked = isUserRole || (Model.SelectedRoles != null && Model.SelectedRoles.Contains(role));
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="SelectedRoles" value="@role" id="role_@role" @(isChecked ? "checked" : "") @((isUserRole || isProtectedAdminRole) ? "disabled" : "") />
+                                <label class="form-check-label" for="role_@role">@role</label>
+                            </div>
+
+                            @if (isUserRole)
+                            {
+                                <input type="hidden" name="SelectedRoles" value="User" />
+                            }
+
+                            @if (isProtectedAdminRole)
+                            {
+                                <input type="hidden" name="SelectedRoles" value="Admin" />
+                            }
+                        }
+                    </div>
+                    <div class="form-text">Rolul <span class="fw-semibold">User</span> este obligatoriu și nu poate fi scos.</div>
+                    @if (!string.IsNullOrWhiteSpace(Model.Email) && Model.Email.Equals("admin@shopkeep.com", StringComparison.OrdinalIgnoreCase))
+                    {
+                        <div class="form-text">Contul <span class="fw-semibold">admin@shopkeep.com</span> este Admin suprem: rolul <span class="fw-semibold">Admin</span> nu poate fi scos.</div>
+                    }
+                </div>
+
+                <button type="submit" class="btn btn-primary">Salvează</button>
+                <a class="btn btn-outline-secondary" asp-action="Index">Renunță</a>
+            </form>
+        </div>
+    </div>
+</div>

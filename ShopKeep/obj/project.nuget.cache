@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "jimj3W5ANYw=",
+  "dgSpecHash": "OL9mwvEu54U=",
   "success": true,
   "projectFilePath": "/Users/robertjmek/Desktop/UNI/DAW/ShopKeep/ShopKeep/ShopKeep.csproj",
   "expectedPackageFiles": [
@@ -119,6 +119,7 @@
     "/Users/robertjmek/.nuget/packages/nuget.protocol/6.11.0/nuget.protocol.6.11.0.nupkg.sha512",
     "/Users/robertjmek/.nuget/packages/nuget.versioning/6.11.0/nuget.versioning.6.11.0.nupkg.sha512",
     "/Users/robertjmek/.nuget/packages/pomelo.entityframeworkcore.mysql/9.0.0/pomelo.entityframeworkcore.mysql.9.0.0.nupkg.sha512",
+    "/Users/robertjmek/.nuget/packages/sixlabors.imagesharp/3.1.12/sixlabors.imagesharp.3.1.12.nupkg.sha512",
     "/Users/robertjmek/.nuget/packages/system.codedom/6.0.0/system.codedom.6.0.0.nupkg.sha512",
     "/Users/robertjmek/.nuget/packages/system.collections.immutable/8.0.0/system.collections.immutable.8.0.0.nupkg.sha512",
     "/Users/robertjmek/.nuget/packages/system.composition/7.0.0/system.composition.7.0.0.nupkg.sha512",

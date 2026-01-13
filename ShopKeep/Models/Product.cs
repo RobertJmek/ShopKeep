@@ -8,6 +8,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace ShopKeep.Models
 {
 
+    public enum ProductStatus
+    {
+        Pending = 0,
+        Approved = 1,
+        Rejected = 2
+    }
+
     public class Product
     {
         [Key]
@@ -43,8 +50,8 @@ namespace ShopKeep.Models
         [Display(Name = "Rating mediu")]
         public double AverageRating { get; set; } = 0;
 
-        // Status (ex: Draft/Pending/Approved etc.)
-        public int Status { get; set; }
+        // Status (Pending/Approved/Rejected)
+        public int Status { get; set; } = (int)ProductStatus.Approved;
 
 
         // Feedback de la administrator

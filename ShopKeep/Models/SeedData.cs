@@ -46,6 +46,8 @@ namespace ShopKeep.Models
                 dateOfBirth: new DateTime(2003, 6, 9),
                 password: "User1!",
                 role: "User");
+
+            await EnsureAllUsersHaveUserRoleAsync(userManager);
         }
 
         private static async Task EnsureRoleAsync(RoleManager<IdentityRole> roleManager, string roleName)
@@ -95,6 +97,32 @@ namespace ShopKeep.Models
                 if (!roleResult.Succeeded)
                 {
                     throw new InvalidOperationException($"Failed adding user '{email}' to role '{role}': {string.Join(", ", roleResult.Errors)}");
+                }
+            }
+
+            // Everyone must also be a normal "User"
+            if (!await userManager.IsInRoleAsync(user, "User"))
+            {
+                var userRoleResult = await userManager.AddToRoleAsync(user, "User");
+                if (!userRoleResult.Succeeded)
+                {
+                    throw new InvalidOperationException($"Failed adding user '{email}' to role 'User': {string.Join(", ", userRoleResult.Errors)}");
+                }
+            }
+        }
+
+        private static async Task EnsureAllUsersHaveUserRoleAsync(UserManager<ApplicationUser> userManager)
+        {
+            var users = await userManager.Users.ToListAsync();
+            foreach (var user in users)
+            {
+                if (!await userManager.IsInRoleAsync(user, "User"))
+                {
+                    var result = await userManager.AddToRoleAsync(user, "User");
+                    if (!result.Succeeded)
+                    {
+                        throw new InvalidOperationException($"Failed adding user '{user.Email}' to role 'User': {string.Join(", ", result.Errors)}");
+                    }
                 }
             }
         }

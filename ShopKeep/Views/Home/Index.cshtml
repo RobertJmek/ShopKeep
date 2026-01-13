@@ -1,5 +1,7 @@
 ﻿@{
     ViewData["Title"] = "Acasă";
+
+    var isStaff = User?.Identity?.IsAuthenticated == true && (User.IsInRole("Admin") || User.IsInRole("Editor"));
 }
 
 <!-- Hero Section -->
@@ -118,9 +120,9 @@
                                 <small class="text-muted">
                                     <i class="bi bi-box"></i> @(category.Products?.Count ?? 0) produse
                                 </small>
-                                <a asp-controller="Category" asp-action="Show" asp-route-id="@category.Id" 
+                                <a asp-controller="Product" asp-action="Index" asp-route-categoryId="@category.Id" 
                                    class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-eye"></i> Detalii
+                                    <i class="bi bi-box-seam"></i> Vezi produse
                                 </a>
                             </div>
                         </div>
@@ -207,16 +209,46 @@
                     </a>
                 </div>
                 <div class="col-md-6 col-lg-3">
-                    <a href="#" class="btn btn-warning w-100 py-3 shadow-sm">
-                        <i class="bi bi-cart-check fs-4 d-block mb-2"></i>
-                        Coșul Meu
-                    </a>
+                    @if (!isStaff)
+                    {
+                        if (User?.Identity?.IsAuthenticated == true)
+                        {
+                            <a asp-controller="ShoppingCart" asp-action="Index" class="btn btn-warning w-100 py-3 shadow-sm">
+                                <i class="bi bi-cart-check fs-4 d-block mb-2"></i>
+                                Coșul Meu
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-area="Identity" asp-page="/Account/Login"
+                               asp-route-returnUrl="@Url.Action("Index", "ShoppingCart")"
+                               class="btn btn-warning w-100 py-3 shadow-sm">
+                                <i class="bi bi-cart-check fs-4 d-block mb-2"></i>
+                                Coșul Meu
+                            </a>
+                        }
+                    }
                 </div>
                 <div class="col-md-6 col-lg-3">
-                    <a href="#" class="btn btn-info w-100 py-3 shadow-sm">
-                        <i class="bi bi-heart-fill fs-4 d-block mb-2"></i>
-                        Favorite
-                    </a>
+                    @if (!isStaff)
+                    {
+                        if (User?.Identity?.IsAuthenticated == true)
+                        {
+                            <a asp-controller="Wishlist" asp-action="Index" class="btn btn-info w-100 py-3 shadow-sm">
+                                <i class="bi bi-heart-fill fs-4 d-block mb-2"></i>
+                                Favorite
+                            </a>
+                        }
+                        else
+                        {
+                            <a asp-area="Identity" asp-page="/Account/Login"
+                               asp-route-returnUrl="@Url.Action("Index", "Wishlist")"
+                               class="btn btn-info w-100 py-3 shadow-sm">
+                                <i class="bi bi-heart-fill fs-4 d-block mb-2"></i>
+                                Favorite
+                            </a>
+                        }
+                    }
                 </div>
             </div>
         </div>

@@ -21,6 +21,88 @@ body {
   margin-bottom: 200px;
 }
 
+/* Modern navbar (no-JS friendly) */
+.sk-navbar .navbar-brand {
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  font-size: 1.05rem;
+}
+
+.sk-navbar .nav-link {
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.sk-navbar .nav-link:hover,
+.sk-navbar .nav-link:focus {
+  background: rgba(13, 110, 253, 0.08);
+}
+
+.sk-navbar .nav-link .bi {
+  margin-right: 0.35rem;
+  opacity: 0.9;
+}
+
+/* <details> dropdown for admin menu */
+.sk-nav-details {
+  position: relative;
+}
+
+.sk-nav-details > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.sk-nav-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.sk-nav-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.4rem);
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  min-width: 240px;
+  padding: 0.35rem;
+  z-index: 1000;
+}
+
+.sk-nav-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 12px;
+  color: #212529;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.sk-nav-menu-item:hover,
+.sk-nav-menu-item:focus {
+  background: rgba(13, 110, 253, 0.08);
+  color: #212529;
+}
+
+.sk-nav-menu-item .bi {
+  margin-right: 0;
+}
+
+/* Auth buttons in navbar */
+.sk-auth .sk-auth-pill {
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  font-weight: 600;
+}
+
+.sk-auth .btn {
+  line-height: 1.1;
+}
+
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
   color: var(--bs-secondary-color);
   text-align: end;

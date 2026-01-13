@@ -20,6 +20,12 @@ namespace ShopKeep.Controllers
             }
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var savedAddress = db.Users
+                .Where(u => u.Id == userId)
+                .Select(u => u.Address)
+                .FirstOrDefault();
+            ViewBag.SavedAddress = savedAddress;
             
             var cartItems = db.ShoppingCartItems
                 .Include(c => c.Product)
@@ -34,9 +40,16 @@ namespace ShopKeep.Controllers
         }
 
         // Adaugă produs în coș
+        [AllowAnonymous]
         [HttpPost]
         public ActionResult Add(int productId, int quantity = 1)
         {
+            if (User?.Identity?.IsAuthenticated != true)
+            {
+                var returnUrl = Url.Action("Show", "Product", new { id = productId });
+                return RedirectToPage("/Account/Login", new { area = "Identity", returnUrl });
+            }
+
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
             if (quantity <= 0)
@@ -163,9 +176,34 @@ namespace ShopKeep.Controllers
 
         // Finalizează comanda
         [HttpPost]
-        public ActionResult Checkout(string? deliveryAddress)
+        public ActionResult Checkout(bool useSavedAddress, string? deliveryAddress)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            string? finalAddress;
+            if (useSavedAddress)
+            {
+                finalAddress = db.Users
+                    .Where(u => u.Id == userId)
+                    .Select(u => u.Address)
+                    .FirstOrDefault();
+
+                if (string.IsNullOrWhiteSpace(finalAddress))
+                {
+                    TempData["message"] = "Nu ai o adresă salvată în cont. Te rog completează o adresă de livrare.";
+                    return RedirectToAction("Index");
+                }
+            }
+            else
+            {
+                finalAddress = deliveryAddress;
+            }
+
+            if (string.IsNullOrWhiteSpace(finalAddress))
+            {
+                TempData["message"] = "Adresa de livrare este obligatorie";
+                return RedirectToAction("Index");
+            }
             
             var cartItems = db.ShoppingCartItems
                 .Include(c => c.Product)
@@ -201,7 +239,7 @@ namespace ShopKeep.Controllers
                 OrderDate = DateTime.Now,
                 TotalAmount = cartItems.Sum(c => c.Subtotal),
                 Status = "Plasată",
-                DeliveryAddress = deliveryAddress
+                DeliveryAddress = finalAddress.Trim()
             };
 
             db.Orders.Add(order);
@@ -215,7 +253,9 @@ namespace ShopKeep.Controllers
                     OrderId = order.Id,
                     ProductId = item.ProductId,
                     Quantity = item.Quantity,
-                    UnitPrice = item.Product!.Price
+                    UnitPrice = item.Product!.Price,
+                    ProductTitle = item.Product.Title,
+                    ProductImageUrl = item.Product.ImageUrl
                 };
                 db.OrderItems.Add(orderItem);
 

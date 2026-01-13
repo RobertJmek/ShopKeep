@@ -34,9 +34,16 @@ namespace ShopKeep.Controllers
         }
 
         // Adaugă produs la favorite
+        [AllowAnonymous]
         [HttpPost]
         public ActionResult Add(int productId)
         {
+            if (User?.Identity?.IsAuthenticated != true)
+            {
+                var returnUrl = Url.Action("Show", "Product", new { id = productId });
+                return RedirectToPage("/Account/Login", new { area = "Identity", returnUrl });
+            }
+
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             
             // Verifică dacă produsul există

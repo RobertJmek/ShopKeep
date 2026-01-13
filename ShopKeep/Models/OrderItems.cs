@@ -19,12 +19,20 @@ namespace ShopKeep.Models
         [ForeignKey("OrderId")]
         public virtual Order? Order { get; set; }
 
-        [Required(ErrorMessage = "Produsul este obligatoriu")]
         [Display(Name = "Produs")]
-        public int ProductId { get; set; }
+        public int? ProductId { get; set; }
         
         [ForeignKey("ProductId")]
         public virtual Product? Product { get; set; }
+
+        // Informații produse stocate (păstrate chiar dacă produsul e șters)
+        [StringLength(200)]
+        [Display(Name = "Nume produs")]
+        public string? ProductTitle { get; set; }
+
+        [StringLength(500)]
+        [Display(Name = "Imagine produs")]
+        public string? ProductImageUrl { get; set; }
 
         [Required(ErrorMessage = "Cantitatea este obligatorie")]
         [Range(1, int.MaxValue, ErrorMessage = "Cantitatea trebuie să fie cel puțin 1")]

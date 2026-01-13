@@ -95,7 +95,34 @@
 
                         <form asp-action="Checkout" method="post">
                             <label class="form-label">Adresă de livrare</label>
-                            <textarea name="deliveryAddress" class="form-control" rows="3" placeholder="Strada, număr, oraș..."></textarea>
+
+                            @if (!string.IsNullOrWhiteSpace(ViewBag.SavedAddress as string))
+                            {
+                                <input type="hidden" id="savedAddressValue" value="@((string)ViewBag.SavedAddress)" />
+
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="useSavedAddress" id="addrSaved" value="true" checked />
+                                    <label class="form-check-label" for="addrSaved">
+                                        Folosește adresa salvată în cont
+                                    </label>
+                                    <div class="text-muted small mt-1">@ViewBag.SavedAddress</div>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="useSavedAddress" id="addrCustom" value="false" />
+                                    <label class="form-check-label" for="addrCustom">
+                                        Introdu altă adresă
+                                    </label>
+                                </div>
+                            }
+                            else
+                            {
+                                <input type="hidden" name="useSavedAddress" value="false" />
+                                <div class="alert alert-warning py-2">
+                                    Nu ai o adresă salvată în cont. Completează mai jos.
+                                </div>
+                            }
+
+                            <textarea id="deliveryAddress" name="deliveryAddress" class="form-control" rows="3" placeholder="Strada, număr, oraș..." maxlength="500"></textarea>
                             <button type="submit" class="btn btn-success w-100 mt-3">
                                 <i class="bi bi-bag-check"></i> Plasează comanda
                             </button>
@@ -104,6 +131,35 @@
                 </div>
             </div>
         </div>
+
+        <script>
+            (function () {
+                const savedRadio = document.getElementById('addrSaved');
+                const customRadio = document.getElementById('addrCustom');
+                const textarea = document.getElementById('deliveryAddress');
+                const savedValue = document.getElementById('savedAddressValue');
+
+                if (!savedRadio || !customRadio || !textarea || !savedValue) {
+                    if (textarea) {
+                        textarea.required = true;
+                    }
+                    return;
+                }
+
+                function sync() {
+                    const useSaved = savedRadio.checked;
+                    textarea.disabled = useSaved;
+                    textarea.required = !useSaved;
+                    if (useSaved) {
+                        textarea.value = savedValue.value;
+                    }
+                }
+
+                savedRadio.addEventListener('change', sync);
+                customRadio.addEventListener('change', sync);
+                sync();
+            })();
+        </script>
     }
     else
     {

@@ -49,7 +49,8 @@ namespace ShopKeep.Controllers
             Order? order = db.Orders
                 .Include(o => o.User)
                 .Include(o => o.OrderItems!)
-                    .ThenInclude(oi => oi.Product)
+                    .ThenInclude(oi => oi.Product!)
+                    .ThenInclude(p => p.Category)
                 .FirstOrDefault(o => o.Id == id);
 
             if (order == null)
@@ -103,6 +104,54 @@ namespace ShopKeep.Controllers
             db.SaveChanges();
             TempData["message"] = "Comanda a fost ștearsă";
             return RedirectToAction("Index");
+        }
+
+        // Userul poate anula doar comanda lui, cât timp e "Plasată"
+        [HttpPost]
+        public ActionResult Cancel(int id)
+        {
+            var order = db.Orders
+                .Include(o => o.OrderItems!)
+                    .ThenInclude(oi => oi.Product)
+                .FirstOrDefault(o => o.Id == id);
+
+            if (order == null)
+            {
+                return NotFound();
+            }
+
+            if (!User.IsInRole("Admin"))
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (order.UserId != userId)
+                {
+                    return Forbid();
+                }
+            }
+
+            if (order.Status != "Plasată")
+            {
+                TempData["message"] = "Comanda nu mai poate fi anulată";
+                return RedirectToAction("Show", new { id });
+            }
+
+            // Restore stock
+            if (order.OrderItems != null)
+            {
+                foreach (var item in order.OrderItems)
+                {
+                    if (item.Product != null)
+                    {
+                        item.Product.Stock += item.Quantity;
+                    }
+                }
+            }
+
+            order.Status = "Anulată";
+            db.SaveChanges();
+
+            TempData["message"] = "Comanda a fost anulată";
+            return RedirectToAction("Show", new { id });
         }
     }
 }

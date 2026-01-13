@@ -1,4 +1,4 @@
-@model ShopKeep.Models.Product
+@model ShopKeep.Models.ProductFormVM
 
 @{
     ViewData["Title"] = "Editează Produsul";
@@ -16,15 +16,14 @@
     <div class="row">
         <div class="col-lg-4">
             <div class="card shadow-sm border-0 mb-4 sticky-top" style="top: 20px;">
-                <img src="@Model.ImageUrl" class="card-img-top" alt="@Model.Title" 
-                     style="height: 300px; object-fit: cover;"
-                     onerror="this.src='https://via.placeholder.com/300x300?text=No+Image'">
+                <img src="@(Model.ExistingImageUrl ?? "")" class="card-img-top" alt="@Model.Title" 
+                     style="height: 300px; object-fit: cover;">
                 <div class="card-body">
                     <h6 class="text-muted mb-2">Previzualizare</h6>
                     <h5 class="fw-bold">@Model.Title</h5>
                     <div class="d-flex justify-content-between align-items-center">
                         <span class="h5 text-success mb-0">@Model.Price.ToString("C2")</span>
-                        <span class="badge bg-primary">@Model.Category?.Name</span>
+                        <span class="badge bg-primary">@ViewBag.CategoryName</span>
                     </div>
                 </div>
             </div>
@@ -38,8 +37,10 @@
                     </h4>
                 </div>
                 <div class="card-body p-4">
-                    <form asp-action="Edit" method="post">
+                    <form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
                         <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <input type="hidden" asp-for="Id" />
                         
                         <div class="mb-3">
                             <div class="p-3 bg-light rounded">
@@ -84,13 +85,14 @@
                             </div>
 
                             <div class="col-12">
-                                <label asp-for="ImageUrl" class="form-label fw-bold">
-                                    <i class="bi bi-image"></i> URL Imagine
-                                    <span class="text-danger">*</span>
+                                <label asp-for="ImageFile" class="form-label fw-bold">
+                                    <i class="bi bi-image"></i> Înlocuiește imaginea (opțional)
                                 </label>
-                                <input asp-for="ImageUrl" 
-                                       class="form-control" />
-                                <span asp-validation-for="ImageUrl" class="text-danger small"></span>
+                                <input asp-for="ImageFile" type="file" class="form-control" accept="image/jpeg,image/png" />
+                                <span asp-validation-for="ImageFile" class="text-danger small"></span>
+                                <div class="form-text">
+                                    Acceptăm JPG/PNG, max 2MB. Imaginea este decupată automat la 800×800.
+                                </div>
                             </div>
 
                             <div class="col-md-6">
@@ -148,6 +150,3 @@
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}

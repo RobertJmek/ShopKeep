@@ -1,6 +1,7 @@
 using ShopKeep.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 
 namespace ShopKeep.Controllers
 {
@@ -15,16 +16,43 @@ namespace ShopKeep.Controllers
                 ViewBag.message = TempData["message"].ToString();
             }
 
-            var categories = from category in db.Categories
-                             orderby category.Name
-                             select category;
+            var canSeeAllProducts = User?.Identity?.IsAuthenticated == true
+                && (User.IsInRole("Admin") || User.IsInRole("Editor"));
+
+            IQueryable<Category> query = db.Categories.AsNoTracking();
+            if (canSeeAllProducts)
+            {
+                query = query.Include(c => c.Products);
+            }
+            else
+            {
+                query = query.Include(c => c.Products!.Where(p => p.Status == (int)ProductStatus.Approved));
+            }
+
+            var categories = query
+                .OrderBy(c => c.Name)
+                .ToList();
+
             ViewBag.Categories = categories;
-           return View();
+            return View();
         }
 
         public ActionResult Show(int id)
         {
-            Category? category = db.Categories.Find(id);
+            var canSeeAllProducts = User?.Identity?.IsAuthenticated == true
+                && (User.IsInRole("Admin") || User.IsInRole("Editor"));
+
+            IQueryable<Category> query = db.Categories.AsNoTracking();
+            if (canSeeAllProducts)
+            {
+                query = query.Include(c => c.Products);
+            }
+            else
+            {
+                query = query.Include(c => c.Products!.Where(p => p.Status == (int)ProductStatus.Approved));
+            }
+
+            Category? category = query.FirstOrDefault(c => c.Id == id);
             if (category == null)
             {
                 return NotFound();
@@ -42,12 +70,39 @@ namespace ShopKeep.Controllers
         [HttpPost]
         public ActionResult New(Category cat)
         {
+            if (!ModelState.IsValid)
+            {
+                return View(cat);
+            }
+
             try
             {
+                var name = cat.Name!.Trim();
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    ModelState.AddModelError("Name", "Numele categoriei este obligatoriu");
+                    return View(cat);
+                }
+
+                var nameLower = name.ToLower();
+                var exists = db.Categories.Any(c => c.Name.ToLower() == nameLower);
+                if (exists)
+                {
+                    ModelState.AddModelError("Name", "Categorie deja existentă");
+                    return View(cat);
+                }
+
+                cat.Name = name;
+
                 db.Categories.Add(cat);
                 db.SaveChanges();
                 TempData["message"] = "Categoria a fost adaugata";
                 return RedirectToAction("Index");
+            }
+            catch (DbUpdateException)
+            {
+                ModelState.AddModelError("Name", "Categorie deja existentă");
+                return View(cat);
             }
             catch (Exception)
             {
@@ -58,7 +113,10 @@ namespace ShopKeep.Controllers
         [Authorize(Roles = "Admin")]
         public ActionResult Edit(int id)
         {
-            Category? category = db.Categories.Find(id);
+            Category? category = db.Categories
+                .AsNoTracking()
+                .Include(c => c.Products)
+                .FirstOrDefault(c => c.Id == id);
             if (category == null)
             {
                 return NotFound();
@@ -76,12 +134,37 @@ namespace ShopKeep.Controllers
                 return NotFound();
             }
 
+            if (!ModelState.IsValid)
+            {
+                return View(requestCategory);
+            }
+
             try
             {
-                category.Name = requestCategory.Name;
+                var name = requestCategory.Name!.Trim();
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    ModelState.AddModelError("Name", "Numele categoriei este obligatoriu");
+                    return View(requestCategory);
+                }
+
+                var nameLower = name.ToLower();
+                var exists = db.Categories.Any(c => c.Id != id && c.Name.ToLower() == nameLower);
+                if (exists)
+                {
+                    ModelState.AddModelError("Name", "Categorie deja existentă");
+                    return View(requestCategory);
+                }
+
+                category.Name = name;
                 db.SaveChanges();
                 TempData["message"] = "Categoria a fost modificata!";
                 return RedirectToAction("Index");
+            }
+            catch (DbUpdateException)
+            {
+                ModelState.AddModelError("Name", "Categorie deja existentă");
+                return View(requestCategory);
             }
             catch (Exception)
             {

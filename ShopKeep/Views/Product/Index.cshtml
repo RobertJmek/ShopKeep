@@ -6,6 +6,19 @@
 @inject SignInManager<ShopKeep.Models.ApplicationUser> SignInManager
 @inject UserManager<ShopKeep.Models.ApplicationUser> UserManager
 
+@using ShopKeep.Models
+
+@{
+    var currentUserId = SignInManager.IsSignedIn(User) ? UserManager.GetUserId(User) : null;
+    int? selectedCategoryId = null;
+    try { selectedCategoryId = (int?)ViewBag.SelectedCategoryId; } catch { selectedCategoryId = null; }
+    string? selectedCategoryName = null;
+    try { selectedCategoryName = (string?)ViewBag.SelectedCategoryName; } catch { selectedCategoryName = null; }
+
+    IEnumerable<ShopKeep.Models.Category> allCategories = Enumerable.Empty<ShopKeep.Models.Category>();
+    try { allCategories = (IEnumerable<ShopKeep.Models.Category>)ViewBag.AllCategories; } catch { allCategories = Enumerable.Empty<ShopKeep.Models.Category>(); }
+}
+
 <div class="container my-4">
     <div class="row mb-4">
         <div class="col">
@@ -13,15 +26,77 @@
                 <i class="bi bi-box-seam-fill"></i> Catalog Produse
             </h1>
             <p class="text-muted">Explorează gama noastră completă de produse</p>
+
+            @if (selectedCategoryId.HasValue)
+            {
+                <div class="mt-2">
+                    <span class="badge text-bg-success">
+                        Filtru: @(string.IsNullOrWhiteSpace(selectedCategoryName) ? "Categorie" : selectedCategoryName)
+                    </span>
+                    <a class="ms-2 small text-decoration-none" asp-action="Index">Resetează filtrul</a>
+                </div>
+            }
         </div>
         @if (SignInManager.IsSignedIn(User) && (User.IsInRole("Admin") || User.IsInRole("Editor")))
         {
             <div class="col-auto align-self-center">
-                <a asp-action="New" class="btn btn-success btn-lg shadow-sm">
-                    <i class="bi bi-plus-circle"></i> Adaugă Produs Nou
-                </a>
+                <div class="d-flex gap-2 flex-wrap justify-content-end">
+                    @if (User.IsInRole("Admin"))
+                    {
+                        <a asp-action="Pending" class="btn btn-outline-primary btn-lg shadow-sm">
+                            <i class="bi bi-shield-check"></i> Propuneri
+                        </a>
+                    }
+                    @if (User.IsInRole("Editor"))
+                    {
+                        <a asp-action="MyProposals" class="btn btn-outline-primary btn-lg shadow-sm">
+                            <i class="bi bi-lightbulb"></i> Propunerile mele
+                        </a>
+                    }
+                    <a asp-action="New" class="btn btn-success btn-lg shadow-sm">
+                        <i class="bi bi-plus-circle"></i>
+                        @(User.IsInRole("Editor") ? "Propune produs" : "Adaugă produs")
+                    </a>
+                </div>
             </div>
         }
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form method="get" asp-action="Index" class="row g-2 align-items-end">
+                <div class="col-sm-8 col-md-5">
+                    <label class="form-label">Filtrează după categorie</label>
+                    <select class="form-select" name="categoryId">
+                        <option value="">Toate categoriile</option>
+                        @foreach (var c in allCategories)
+                        {
+                            if (selectedCategoryId.HasValue && selectedCategoryId.Value == c.Id)
+                            {
+                                <option value="@c.Id" selected>
+                                    @c.Name
+                                </option>
+                            }
+                            else
+                            {
+                                <option value="@c.Id">
+                                    @c.Name
+                                </option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-auto">
+                    <button type="submit" class="btn btn-outline-success">Filtrează</button>
+                </div>
+                @if (selectedCategoryId.HasValue)
+                {
+                    <div class="col-auto">
+                        <a class="btn btn-outline-secondary" asp-action="Index">Resetează</a>
+                    </div>
+                }
+            </form>
+        </div>
     </div>
 
     @if (ViewBag.message != null)
@@ -37,12 +112,18 @@
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
             @foreach (var product in ViewBag.Products)
             {
+                var canEditorManage = SignInManager.IsSignedIn(User)
+                    && User.IsInRole("Editor")
+                    && product.ProposedByUserId != null
+                    && product.ProposedByUserId == currentUserId
+                    && product.Status != (int)ProductStatus.Approved;
+
                 <div class="col">
                     <div class="card h-100 shadow-sm border-0 hover-lift">
                         <div class="position-relative">
                             <img src="@product.ImageUrl" class="card-img-top" alt="@product.Title" 
                                  style="height: 250px; object-fit: cover;" 
-                                 onerror="this.src='https://via.placeholder.com/300x250?text=No+Image'">
+                                   >
                             @if (product.IsInStock)
                             {
                                 <span class="position-absolute top-0 end-0 m-2 badge bg-success">
@@ -58,9 +139,34 @@
                             <span class="position-absolute top-0 start-0 m-2 badge bg-primary">
                                 @product.Category?.Name
                             </span>
+
+                            @if (SignInManager.IsSignedIn(User) && (User.IsInRole("Admin") || User.IsInRole("Editor")) && product.Status != (int)ProductStatus.Approved)
+                            {
+                                <span class="position-absolute bottom-0 start-0 m-2 badge bg-warning text-dark">
+                                    @(product.Status == (int)ProductStatus.Pending ? "În așteptare" : "Respins")
+                                </span>
+                            }
                         </div>
                         <div class="card-body d-flex flex-column">
                             <h5 class="card-title text-truncate mb-2">@product.Title</h5>
+
+                            @{
+                                var ratings = ((IEnumerable<ShopKeep.Models.Review>?)product.Reviews)
+                                    ?.Where(r => r.Rating.HasValue)
+                                    .Select(r => r.Rating!.Value)
+                                    .ToList() ?? new List<int>();
+                                var avgRating = ratings.Count > 0 ? ratings.Average() : 0;
+                            }
+
+                            <div class="mb-2">
+                                @await Html.PartialAsync("_StarRating", new ShopKeep.Models.StarRatingVM
+                                {
+                                    Average = avgRating,
+                                    RatingCount = ratings.Count,
+                                    CssClass = "small"
+                                })
+                            </div>
+
                             <p class="card-text text-muted small flex-grow-1" style="min-height: 60px;">
                                 @(product.Description.Length > 100 ? product.Description.Substring(0, 100) + "..." : product.Description)
                             </p>
@@ -75,61 +181,51 @@
                                    class="btn btn-outline-info btn-sm">
                                     <i class="bi bi-eye"></i> Detalii
                                 </a>
-                                @if (SignInManager.IsSignedIn(User) && (User.IsInRole("Admin") || User.IsInRole("Editor")))
+                                @if (SignInManager.IsSignedIn(User) && (User.IsInRole("Admin") || canEditorManage))
                                 {
                                     <a asp-action="Edit" asp-route-id="@product.Id" 
                                        class="btn btn-outline-warning btn-sm">
                                         <i class="bi bi-pencil"></i> Editează
                                     </a>
-                                    <button type="button" class="btn btn-outline-danger btn-sm" 
-                                            data-bs-toggle="modal" data-bs-target="#deleteModal@(product.Id)">
-                                        <i class="bi bi-trash"></i> Șterge
-                                    </button>
+                                    <form asp-action="Delete" asp-route-id="@product.Id" method="post" class="d-inline">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">
+                                            <i class="bi bi-trash"></i> Șterge
+                                        </button>
+                                    </form>
                                 }
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- Delete Modal -->
-                @if (SignInManager.IsSignedIn(User) && (User.IsInRole("Admin") || User.IsInRole("Editor")))
-                {
-                    <div class="modal fade" id="deleteModal@(product.Id)" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header bg-danger text-white">
-                                <h5 class="modal-title">
-                                    <i class="bi bi-exclamation-triangle"></i> Confirmare Ștergere
-                                </h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body">
-                                <p class="mb-0">Ești sigur că vrei să ștergi produsul <strong>"@product.Title"</strong>?</p>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulează</button>
-                                <form asp-action="Delete" asp-route-id="@product.Id" method="post" class="d-inline">
-                                    <button type="submit" class="btn btn-danger">
-                                        <i class="bi bi-trash"></i> Șterge Produs
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                }
             }
         </div>
     }
     else
     {
-        <div class="alert alert-info shadow-sm d-flex align-items-center" role="alert">
-            <i class="bi bi-info-circle fs-3 me-3"></i>
-            <div>
-                <h5 class="alert-heading mb-1">Nu există produse</h5>
-                <p class="mb-0">Începe prin a adăuga primul produs în catalog.</p>
+        @if (SignInManager.IsSignedIn(User) && (User.IsInRole("Admin") || User.IsInRole("Editor")))
+        {
+            <div class="alert alert-info shadow-sm d-flex align-items-center" role="alert">
+                <i class="bi bi-info-circle fs-3 me-3"></i>
+                <div>
+                    <h5 class="alert-heading mb-1">Nu există produse</h5>
+                    <p class="mb-0">
+                        @(User.IsInRole("Editor")
+                            ? "Începe prin a propune primul produs."
+                            : "Începe prin a adăuga primul produs în catalog.")
+                    </p>
+                </div>
             </div>
-        </div>
+        }
+        else
+        {
+            <div class="alert alert-light border shadow-sm d-flex align-items-center" role="alert">
+                <i class="bi bi-hourglass-split fs-3 me-3 text-success"></i>
+                <div>
+                    <h5 class="alert-heading mb-1">Momentan nu avem produse disponibile</h5>
+                    <p class="mb-0 text-muted">Stay tuned — revino în curând!</p>
+                </div>
+            </div>
+        }
     }
 </div>
 

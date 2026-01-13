@@ -4,8 +4,25 @@
 @inject SignInManager<ShopKeep.Models.ApplicationUser> SignInManager
 @inject UserManager<ShopKeep.Models.ApplicationUser> UserManager
 
+@using ShopKeep.Models
+
 @{
     ViewData["Title"] = Model.Title;
+
+    var currentUserId = SignInManager.IsSignedIn(User) ? UserManager.GetUserId(User) : null;
+    var isStaff = SignInManager.IsSignedIn(User) && (User.IsInRole("Admin") || User.IsInRole("Editor"));
+    var canEditorManage = SignInManager.IsSignedIn(User)
+        && User.IsInRole("Editor")
+        && Model.ProposedByUserId != null
+        && Model.ProposedByUserId == currentUserId
+        && Model.Status != (int)ProductStatus.Approved;
+    var canManage = SignInManager.IsSignedIn(User) && (User.IsInRole("Admin") || canEditorManage);
+
+    var ratings = Model.Reviews
+        ?.Where(r => r.Rating.HasValue)
+        .Select(r => r.Rating!.Value)
+        .ToList() ?? new List<int>();
+    var avgRating = ratings.Count > 0 ? ratings.Average() : 0;
 }
 
 <div class="container my-4">
@@ -24,12 +41,31 @@
         </ol>
     </nav>
 
+    @if (SignInManager.IsSignedIn(User) && (User.IsInRole("Admin") || User.IsInRole("Editor")) && Model.Status != (int)ProductStatus.Approved)
+    {
+        var statusText = Model.Status == (int)ProductStatus.Pending ? "În așteptare" : "Respins";
+        var statusClass = Model.Status == (int)ProductStatus.Pending ? "alert-warning" : "alert-danger";
+
+        <div class="alert @statusClass shadow-sm">
+            <div class="d-flex align-items-start gap-2">
+                <i class="bi bi-info-circle fs-4"></i>
+                <div>
+                    <div class="fw-semibold">Produsul nu este public: @statusText</div>
+                    @if (!string.IsNullOrWhiteSpace(Model.AdminFeedback))
+                    {
+                        <div class="small mt-1"><span class="fw-semibold">Feedback Admin:</span> @Model.AdminFeedback</div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
     <div class="row">
         <div class="col-lg-5">
             <div class="card shadow-sm border-0 mb-4 sticky-top" style="top: 20px;">
                 <img src="@Model.ImageUrl" class="card-img-top" alt="@Model.Title" 
                      style="height: 400px; object-fit: cover;"
-                     onerror="this.src='https://via.placeholder.com/400x400?text=No+Image'">
+                     >
                 <div class="card-body">
                     @if (Model.IsInStock)
                     {
@@ -54,6 +90,14 @@
                         <div>
                             <span class="badge bg-primary-subtle text-primary mb-2">@Model.Category?.Name</span>
                             <h1 class="display-6 fw-bold mb-2">@Model.Title</h1>
+                            <div class="mb-2">
+                                @await Html.PartialAsync("_StarRating", new ShopKeep.Models.StarRatingVM
+                                {
+                                    Average = avgRating,
+                                    RatingCount = ratings.Count,
+                                    CssClass = ""
+                                })
+                            </div>
                             <small class="text-muted">ID Produs: #@Model.Id</small>
                         </div>
                     </div>
@@ -88,42 +132,54 @@
                         </div>
                     </div>
 
-                    @if (User?.Identity?.IsAuthenticated == true)
+                    @if (!isStaff)
                     {
-                        <div class="d-grid gap-2">
-                            <form asp-controller="ShoppingCart" asp-action="Add" method="post">
-                                <input type="hidden" name="productId" value="@Model.Id" />
-                                <input type="hidden" name="quantity" value="1" />
-                                <button type="submit" class="btn btn-success btn-lg" @(Model.IsInStock ? "" : "disabled")>
-                                    <i class="bi bi-cart-plus"></i> Adaugă în coș
-                                </button>
-                            </form>
+                        <div class="d-flex justify-content-center">
+                            <div class="w-100" style="max-width: 420px;">
+                                <div class="d-grid gap-2">
+                                    <form asp-controller="ShoppingCart" asp-action="Add" method="post" class="mb-0">
+                                        <input type="hidden" name="productId" value="@Model.Id" />
+                                        <input type="hidden" name="quantity" value="1" />
+                                        <button type="submit" class="btn btn-success btn-lg" @((Model.IsInStock && Model.Status == (int)ProductStatus.Approved) ? "" : "disabled")>
+                                            <i class="bi bi-cart-plus"></i> Adaugă în coș
+                                        </button>
+                                    </form>
 
-                            <form asp-controller="Wishlist" asp-action="Add" method="post">
-                                <input type="hidden" name="productId" value="@Model.Id" />
-                                <button type="submit" class="btn btn-outline-danger btn-lg">
-                                    <i class="bi bi-heart"></i> Adaugă la favorite
-                                </button>
-                            </form>
+                                    <form asp-controller="Wishlist" asp-action="Add" method="post" class="mb-0">
+                                        <input type="hidden" name="productId" value="@Model.Id" />
+                                        <button type="submit" class="btn btn-outline-danger btn-lg" @((Model.Status == (int)ProductStatus.Approved) ? "" : "disabled")>
+                                            <i class="bi bi-heart"></i> Adaugă la favorite
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     }
-                    else
+
+                    @if (!isStaff && User?.Identity?.IsAuthenticated != true)
                     {
-                        <div class="alert alert-light border shadow-sm">
+                        <div class="alert alert-light border shadow-sm mt-3 mb-0">
                             <div class="d-flex align-items-start gap-2">
                                 <i class="bi bi-lock fs-4"></i>
                                 <div>
-                                    <div class="fw-semibold">Autentifică-te ca să cumperi sau să salvezi favorite.</div>
+                                    <div class="fw-semibold">Poți apăsa „Adaugă în coș” sau "Adaugă la favorite", iar apoi te vom ruga să te autentifici.</div>
                                     <div class="small text-muted">După login te întorci automat la produs.</div>
                                 </div>
                             </div>
                         </div>
 
-                        <a class="btn btn-success btn-lg w-100"
-                           asp-area="Identity" asp-page="/Account/Login"
-                           asp-route-returnUrl="@Url.Action("Show", "Product", new { id = Model.Id })">
-                            <i class="bi bi-box-arrow-in-right"></i> Autentificare
-                        </a>
+                        <div class="d-flex gap-2 flex-wrap mt-2">
+                            <a class="btn btn-outline-secondary"
+                               asp-area="Identity" asp-page="/Account/Login"
+                               asp-route-returnUrl="@Url.Action("Show", "Product", new { id = Model.Id })">
+                                <i class="bi bi-box-arrow-in-right"></i> Autentificare
+                            </a>
+                            <a class="btn btn-success"
+                               asp-area="Identity" asp-page="/Account/Register"
+                               asp-route-returnUrl="@Url.Action("Show", "Product", new { id = Model.Id })">
+                                <i class="bi bi-person-plus"></i> Creează cont
+                            </a>
+                        </div>
                     }
                 </div>
             </div>
@@ -136,16 +192,57 @@
                             <i class="bi bi-gear"></i> Acțiuni Administrare
                         </h5>
                         <div class="d-flex gap-2 flex-wrap">
-                            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
-                                <i class="bi bi-pencil"></i> Editează Produsul
-                            </a>
-                            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
-                                <i class="bi bi-trash"></i> Șterge Produsul
-                            </button>
+                            @if (canManage)
+                            {
+                                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">
+                                    <i class="bi bi-pencil"></i> Editează Produsul
+                                </a>
+                                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="bi bi-trash"></i> Șterge Produsul
+                                    </button>
+                                </form>
+                            }
                             <a asp-action="Index" class="btn btn-outline-secondary">
                                 <i class="bi bi-arrow-left"></i> Înapoi la Catalog
                             </a>
                         </div>
+                    </div>
+                </div>
+            }
+
+            @if (User?.Identity?.IsAuthenticated == true && User.IsInRole("Admin") && Model.Status != (int)ProductStatus.Approved)
+            {
+                <div class="card shadow-sm border-0 mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0"><i class="bi bi-shield-check"></i> Moderare produs</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex gap-2 flex-wrap align-items-center">
+                            <form asp-action="Approve" method="post" class="d-inline">
+                                <input type="hidden" name="id" value="@Model.Id" />
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-check2-circle"></i> Aprobă și publică
+                                </button>
+                            </form>
+
+                            <details>
+                                <summary class="btn btn-outline-danger">
+                                    <i class="bi bi-x-circle"></i> Respinge
+                                </summary>
+                                <div class="alert alert-light border shadow-sm mt-2 mb-0" style="width: 100%;">
+                                    <form asp-action="Reject" method="post">
+                                        <input type="hidden" name="id" value="@Model.Id" />
+                                        <label class="form-label">Feedback (opțional)</label>
+                                        <textarea class="form-control" name="adminFeedback" rows="3" placeholder="Ce ar trebui îmbunătățit?">@Model.AdminFeedback</textarea>
+                                        <button type="submit" class="btn btn-danger mt-2">
+                                            <i class="bi bi-x-circle"></i> Confirmă respingerea
+                                        </button>
+                                    </form>
+                                </div>
+                            </details>
+                        </div>
+                        <div class="small text-muted mt-2">Aprobarea face produsul vizibil clienților.</div>
                     </div>
                 </div>
             }
@@ -157,7 +254,13 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    @if (User?.Identity?.IsAuthenticated == true)
+                    @if (Model.Status != (int)ProductStatus.Approved)
+                    {
+                        <div class="alert alert-light border mb-0">
+                            <i class="bi bi-info-circle"></i> Nu poți lăsa review la un produs care nu este public.
+                        </div>
+                    }
+                    else if (User?.Identity?.IsAuthenticated == true)
                     {
                         <form asp-controller="Review" asp-action="Add" method="post">
                             <input type="hidden" name="productId" value="@Model.Id" />
@@ -231,33 +334,5 @@
         </div>
     </div>
 </div>
-
-<!-- Delete Modal -->
-@if (User?.Identity?.IsAuthenticated == true && (User.IsInRole("Admin") || User.IsInRole("Editor")))
-{
-    <div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">
-                    <i class="bi bi-exclamation-triangle"></i> Confirmare Ștergere
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p>Ești sigur că vrei să ștergi produsul <strong>"@Model.Title"</strong>?</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anulează</button>
-                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="d-inline">
-                    <button type="submit" class="btn btn-danger">
-                        <i class="bi bi-trash"></i> Șterge Produs
-                    </button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-}
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">

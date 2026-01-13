@@ -13,7 +13,7 @@ public class HomeController(ILogger<HomeController> logger, AppDbContext context
     {
         // Get statistics for dashboard
         ViewBag.TotalCategories = db.Categories.Count();
-        ViewBag.TotalProducts = db.Products.Count();
+        ViewBag.TotalProducts = db.Products.Count(p => p.Status == (int)ProductStatus.Approved);
         ViewBag.TotalOrders = db.Orders.Count();
         ViewBag.TotalUsers = db.Users.Count();
         
@@ -26,6 +26,7 @@ public class HomeController(ILogger<HomeController> logger, AppDbContext context
         
         // Get featured products
         var featuredProducts = db.Products
+            .Where(p => p.Status == (int)ProductStatus.Approved)
             .OrderByDescending(p => p.Id)
             .Take(6)
             .ToList();

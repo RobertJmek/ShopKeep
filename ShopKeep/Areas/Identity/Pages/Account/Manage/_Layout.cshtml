@@ -1,0 +1,25 @@
+@{
+    Layout = "/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container my-4">
+    <div class="row g-4">
+        <div class="col-lg-3">
+            <div class="card shadow-sm border-0">
+                <div class="card-body">
+                    <h6 class="fw-bold mb-3">Contul meu</h6>
+                    <partial name="_ManageNav" />
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            @RenderBody()
+        </div>
+    </div>
+</div>
+
+@* Identity Manage pages sometimes define a Scripts section. We don't use JS in this app, so ignore it. *@
+@{
+    IgnoreSection("Scripts");
+}
