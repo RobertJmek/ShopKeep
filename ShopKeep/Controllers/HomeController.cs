@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using ShopKeep.Models;
 
 namespace ShopKeep.Controllers;
@@ -17,9 +18,11 @@ public class HomeController(ILogger<HomeController> logger, AppDbContext context
         ViewBag.TotalOrders = db.Orders.Count();
         ViewBag.TotalUsers = db.Users.Count();
         
-        // Get recent categories
+        // Get recent categories sorted by number of products
         var recentCategories = db.Categories
-            .OrderByDescending(c => c.Id)
+            .Include(c => c.Products)
+            .OrderByDescending(c => c.Products!.Count(p => p.Status == (int)ProductStatus.Approved))
+            .ThenByDescending(c => c.Id)
             .Take(4)
             .ToList();
         ViewBag.RecentCategories = recentCategories;
@@ -44,5 +47,12 @@ public class HomeController(ILogger<HomeController> logger, AppDbContext context
     public IActionResult Error()
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+    }
+
+    [Route("Error/404")]
+    public IActionResult NotFound()
+    {
+        Response.StatusCode = 404;
+        return View();
     }
 }

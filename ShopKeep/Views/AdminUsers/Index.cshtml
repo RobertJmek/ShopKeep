@@ -15,6 +15,62 @@
         <div class="alert alert-info">@ViewBag.message</div>
     }
 
+    <!-- Formular search și filtrare -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <form method="get" asp-action="Index" class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <label class="form-label">
+                        <i class="bi bi-search"></i> Caută utilizator
+                    </label>
+                    <input type="text" class="form-control" name="search" 
+                           value="@ViewBag.Search" 
+                           placeholder="Caută după email, nume sau username..." />
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">
+                        <i class="bi bi-person-badge"></i> Filtrare după rol
+                    </label>
+                    <select class="form-select" name="role">
+                        <option value="">Toate rolurile</option>
+                        @if (ViewBag.AllRoles != null)
+                        {
+                            foreach (var r in (List<string>)ViewBag.AllRoles)
+                            {
+                                <option value="@r" selected="@(ViewBag.SelectedRole == r)">@r</option>
+                            }
+                        }
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-funnel"></i> Filtrează
+                    </button>
+                </div>
+            </form>
+            @if (!string.IsNullOrWhiteSpace(ViewBag.Search) || !string.IsNullOrWhiteSpace(ViewBag.SelectedRole))
+            {
+                <div class="mt-3">
+                    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Resetează filtrele
+                    </a>
+                    @if (!string.IsNullOrWhiteSpace(ViewBag.Search))
+                    {
+                        <span class="badge bg-info ms-2">
+                            <i class="bi bi-search"></i> Căutare: "@ViewBag.Search"
+                        </span>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(ViewBag.SelectedRole))
+                    {
+                        <span class="badge bg-primary ms-2">
+                            <i class="bi bi-person-badge"></i> Rol: @ViewBag.SelectedRole
+                        </span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
     <div class="card shadow-sm">
         <div class="table-responsive">
             <table class="table table-striped align-middle mb-0">
@@ -59,11 +115,18 @@
                         <td class="text-end">
                             <a class="btn btn-sm btn-outline-primary" asp-action="EditRoles" asp-route-id="@u.Id">Roluri</a>
 
-                            <form class="d-inline" method="post" asp-action="ToggleLock" asp-route-id="@u.Id">
-                                <button type="submit" class="btn btn-sm btn-outline-warning">
-                                    @(u.IsLockedOut ? "Deblochează" : "Blochează")
-                                </button>
-                            </form>
+                            @if (!string.Equals(u.Email, "admin@shopkeep.com", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <form class="d-inline" method="post" asp-action="ToggleLock" asp-route-id="@u.Id">
+                                    <button type="submit" class="btn btn-sm btn-outline-warning">
+                                        @(u.IsLockedOut ? "Deblochează" : "Blochează")
+                                    </button>
+                                </form>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary" title="Admin suprem nu poate fi blocat">Protejat</span>
+                            }
 
                             <details class="d-inline-block ms-1">
                                 <summary class="btn btn-sm btn-outline-danger">Șterge</summary>

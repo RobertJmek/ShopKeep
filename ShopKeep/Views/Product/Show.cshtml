@@ -148,6 +148,7 @@
 
                     @if (!isStaff)
                     {
+                        var isInWishlist = (bool)(ViewBag.IsInWishlist ?? false);
                         <div class="d-flex justify-content-center">
                             <div class="w-100" style="max-width: 420px;">
                                 <div class="d-grid gap-2">
@@ -159,10 +160,11 @@
                                         </button>
                                     </form>
 
-                                    <form asp-controller="Wishlist" asp-action="Add" method="post" class="mb-0">
+                                    <form asp-controller="Wishlist" asp-action="Add" method="post" class="mb-0 wishlist-form" data-product-id="@Model.Id">
                                         <input type="hidden" name="productId" value="@Model.Id" />
-                                        <button type="submit" class="btn btn-outline-danger btn-lg" @((Model.Status == (int)ProductStatus.Approved) ? "" : "disabled")>
-                                            <i class="bi bi-heart"></i> Adaugă la favorite
+                                        <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                                        <button type="submit" class="btn @(isInWishlist ? "btn-danger" : "btn-outline-danger") btn-lg wishlist-btn" @((Model.Status == (int)ProductStatus.Approved) ? "" : "disabled")>
+                                            <i class="bi @(isInWishlist ? "bi-heart-fill" : "bi-heart")"></i> <span class="wishlist-text">@(isInWishlist ? "În favorite" : "Adaugă la favorite")</span>
                                         </button>
                                     </form>
                                 </div>
@@ -704,4 +706,53 @@
             loadingMsg.remove();
         }
     }
+
+    // Wishlist AJAX
+    const isAuthenticated = @(User?.Identity?.IsAuthenticated == true ? "true" : "false");
+    
+    document.querySelectorAll('.wishlist-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            // Dacă user-ul nu este autentificat, lasă form-ul să se submiteze normal (redirect către login)
+            if (!isAuthenticated) {
+                return;
+            }
+            
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const btn = this.querySelector('.wishlist-btn');
+            const icon = btn.querySelector('i');
+            const text = btn.querySelector('.wishlist-text');
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.isAdded) {
+                        // Produs adăugat la favorite
+                        btn.classList.remove('btn-outline-danger');
+                        btn.classList.add('btn-danger');
+                        icon.classList.remove('bi-heart');
+                        icon.classList.add('bi-heart-fill');
+                        text.textContent = 'În favorite';
+                    } else {
+                        // Produs șters din favorite
+                        btn.classList.remove('btn-danger');
+                        btn.classList.add('btn-outline-danger');
+                        icon.classList.remove('bi-heart-fill');
+                        icon.classList.add('bi-heart');
+                        text.textContent = 'Adaugă la favorite';
+                    }
+                }
+            })
+            .catch(error => console.error('Eroare:', error));
+        });
+    });
 </script>

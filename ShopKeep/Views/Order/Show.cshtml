@@ -123,6 +123,40 @@
         </div>
 
         <div class="col-lg-4">
+            @if (User.IsInRole("Admin") && Model.User != null)
+            {
+                <div class="card shadow-sm border-0 mb-3">
+                    <div class="card-body">
+                        <h6 class="fw-bold mb-3"><i class="bi bi-person-circle"></i> Informații client</h6>
+                        
+                        <div class="mb-3">
+                            <small class="text-muted d-block">Nume complet</small>
+                            <strong>@(string.IsNullOrWhiteSpace(Model.User.FullName) ? "(necunoscut)" : Model.User.FullName)</strong>
+                        </div>
+
+                        <div class="mb-3">
+                            <small class="text-muted d-block">Email</small>
+                            <strong>@Model.User.Email</strong>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.User.PhoneNumber))
+                        {
+                            <div class="mb-0">
+                                <small class="text-muted d-block">Telefon</small>
+                                <strong>@Model.User.PhoneNumber</strong>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="mb-0">
+                                <small class="text-muted d-block">Telefon</small>
+                                <span class="text-muted">(nespecificat)</span>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
             <div class="card shadow-sm border-0">
                 <div class="card-body">
                     <h6 class="fw-bold mb-3"><i class="bi bi-gear"></i> Acțiuni</h6>

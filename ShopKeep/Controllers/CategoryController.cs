@@ -11,53 +11,69 @@ namespace ShopKeep.Controllers
 
         public ActionResult Index()
         {
-            if (TempData.ContainsKey("message"))
+            try
             {
-                ViewBag.message = TempData["message"].ToString();
+                if (TempData.ContainsKey("message"))
+                {
+                    ViewBag.message = TempData["message"].ToString();
+                }
+
+                var canSeeAllProducts = User?.Identity?.IsAuthenticated == true
+                    && (User.IsInRole("Admin") || User.IsInRole("Editor"));
+
+                IQueryable<Category> query = db.Categories.AsNoTracking();
+                if (canSeeAllProducts)
+                {
+                    query = query.Include(c => c.Products);
+                }
+                else
+                {
+                    query = query.Include(c => c.Products!.Where(p => p.Status == (int)ProductStatus.Approved));
+                }
+
+                var categories = query
+                    .OrderBy(c => c.Name)
+                    .ToList();
+
+                ViewBag.Categories = categories;
+                return View();
             }
-
-            var canSeeAllProducts = User?.Identity?.IsAuthenticated == true
-                && (User.IsInRole("Admin") || User.IsInRole("Editor"));
-
-            IQueryable<Category> query = db.Categories.AsNoTracking();
-            if (canSeeAllProducts)
+            catch (Exception)
             {
-                query = query.Include(c => c.Products);
+                TempData["message"] = "A apărut o eroare la încărcarea categoriilor";
+                return RedirectToAction("Index", "Home");
             }
-            else
-            {
-                query = query.Include(c => c.Products!.Where(p => p.Status == (int)ProductStatus.Approved));
-            }
-
-            var categories = query
-                .OrderBy(c => c.Name)
-                .ToList();
-
-            ViewBag.Categories = categories;
-            return View();
         }
 
         public ActionResult Show(int id)
         {
-            var canSeeAllProducts = User?.Identity?.IsAuthenticated == true
-                && (User.IsInRole("Admin") || User.IsInRole("Editor"));
+            try
+            {
+                var canSeeAllProducts = User?.Identity?.IsAuthenticated == true
+                    && (User.IsInRole("Admin") || User.IsInRole("Editor"));
 
-            IQueryable<Category> query = db.Categories.AsNoTracking();
-            if (canSeeAllProducts)
-            {
-                query = query.Include(c => c.Products);
-            }
-            else
-            {
-                query = query.Include(c => c.Products!.Where(p => p.Status == (int)ProductStatus.Approved));
-            }
+                IQueryable<Category> query = db.Categories.AsNoTracking();
+                if (canSeeAllProducts)
+                {
+                    query = query.Include(c => c.Products);
+                }
+                else
+                {
+                    query = query.Include(c => c.Products!.Where(p => p.Status == (int)ProductStatus.Approved));
+                }
 
-            Category? category = query.FirstOrDefault(c => c.Id == id);
-            if (category == null)
-            {
-                return NotFound();
+                Category? category = query.FirstOrDefault(c => c.Id == id);
+                if (category == null)
+                {
+                    return NotFound();
+                }
+                return View(category);
             }
-            return View(category);
+            catch (Exception)
+            {
+                TempData["message"] = "A apărut o eroare la încărcarea categoriei";
+                return RedirectToAction("Index");
+            }
         }
 
         [Authorize(Roles = "Admin")]
@@ -113,15 +129,23 @@ namespace ShopKeep.Controllers
         [Authorize(Roles = "Admin")]
         public ActionResult Edit(int id)
         {
-            Category? category = db.Categories
-                .AsNoTracking()
-                .Include(c => c.Products)
-                .FirstOrDefault(c => c.Id == id);
-            if (category == null)
+            try
             {
-                return NotFound();
+                Category? category = db.Categories
+                    .AsNoTracking()
+                    .Include(c => c.Products)
+                    .FirstOrDefault(c => c.Id == id);
+                if (category == null)
+                {
+                    return NotFound();
+                }
+                return View(category);
             }
-            return View(category);
+            catch (Exception)
+            {
+                TempData["message"] = "A apărut o eroare la încărcarea categoriei";
+                return RedirectToAction("Index");
+            }
         }
 
         [Authorize(Roles = "Admin")]
@@ -176,15 +200,23 @@ namespace ShopKeep.Controllers
         [HttpPost]
         public ActionResult Delete(int id)
         {
-            Category? category = db.Categories.Find(id);
-            if (category == null)
+            try
             {
-                return NotFound();
+                Category? category = db.Categories.Find(id);
+                if (category == null)
+                {
+                    return NotFound();
+                }
+                db.Categories.Remove(category);
+                db.SaveChanges();
+                TempData["message"] = "Categoria a fost stearsa";
+                return RedirectToAction("Index");
             }
-            db.Categories.Remove(category);
-            db.SaveChanges();
-            TempData["message"] = "Categoria a fost stearsa";
-            return RedirectToAction("Index");
+            catch (Exception)
+            {
+                TempData["message"] = "A apărut o eroare la ștergerea categoriei";
+                return RedirectToAction("Index");
+            }
         }
     }
 }

@@ -126,12 +126,28 @@ namespace ShopKeep.Controllers
             {
                 "price_asc" => products.OrderBy(p => p.Price).ToList(),
                 "price_desc" => products.OrderByDescending(p => p.Price).ToList(),
-                "rating_asc" => products.OrderBy(p => p.AverageRating).ToList(),
-                "rating_desc" => products.OrderByDescending(p => p.AverageRating).ToList(),
+                "rating_asc" => products.OrderBy(p => p.Reviews?.Where(r => r.Rating.HasValue).Select(r => r.Rating!.Value).DefaultIfEmpty(0).Average() ?? 0).ToList(),
+                "rating_desc" => products.OrderByDescending(p => p.Reviews?.Where(r => r.Rating.HasValue).Select(r => r.Rating!.Value).DefaultIfEmpty(0).Average() ?? 0).ToList(),
                 _ => products.OrderByDescending(p => p.Id).ToList()
             };
             
             ViewBag.Products = products;
+            
+            // Get wishlist product IDs for current user
+            if (User?.Identity?.IsAuthenticated == true && !IsAdmin && !IsEditor)
+            {
+                var userId = CurrentUserId;
+                var wishlistProductIds = db.WishlistItems
+                    .Where(w => w.UserId == userId)
+                    .Select(w => w.ProductId)
+                    .ToList();
+                ViewBag.WishlistProductIds = wishlistProductIds;
+            }
+            else
+            {
+                ViewBag.WishlistProductIds = new List<int>();
+            }
+            
             return View();
         }
 
@@ -153,6 +169,18 @@ namespace ShopKeep.Controllers
             {
                 return NotFound();
             }
+
+            // Verifică dacă produsul e deja în wishlist
+            if (User?.Identity?.IsAuthenticated == true)
+            {
+                var userId = CurrentUserId;
+                ViewBag.IsInWishlist = db.WishlistItems.Any(w => w.UserId == userId && w.ProductId == id);
+            }
+            else
+            {
+                ViewBag.IsInWishlist = false;
+            }
+
             return View(product);
         }
 

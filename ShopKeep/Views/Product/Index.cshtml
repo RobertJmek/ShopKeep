@@ -10,6 +10,7 @@
 
 @{
     var currentUserId = SignInManager.IsSignedIn(User) ? UserManager.GetUserId(User) : null;
+    var isStaff = SignInManager.IsSignedIn(User) && (User.IsInRole("Admin") || User.IsInRole("Editor"));
     int? selectedCategoryId = null;
     try { selectedCategoryId = (int?)ViewBag.SelectedCategoryId; } catch { selectedCategoryId = null; }
     string? selectedCategoryName = null;
@@ -21,6 +22,9 @@
 
     IEnumerable<ShopKeep.Models.Category> allCategories = Enumerable.Empty<ShopKeep.Models.Category>();
     try { allCategories = (IEnumerable<ShopKeep.Models.Category>)ViewBag.AllCategories; } catch { allCategories = Enumerable.Empty<ShopKeep.Models.Category>(); }
+    
+    List<int> wishlistProductIds = new List<int>();
+    try { wishlistProductIds = (List<int>)ViewBag.WishlistProductIds; } catch { wishlistProductIds = new List<int>(); }
 }
 
 <div class="container my-4">
@@ -174,11 +178,11 @@
                 var canEditorManage = SignInManager.IsSignedIn(User)
                     && User.IsInRole("Editor")
                     && product.ProposedByUserId != null
-                    && product.ProposedByUserId == currentUserId
-                    && product.Status != (int)ProductStatus.Approved;
+                    && product.ProposedByUserId == currentUserId;
 
                 <div class="col">
-                    <div class="card h-100 shadow-sm border-0 hover-lift">
+                    <div class="card h-100 shadow-sm border-0 hover-lift" style="cursor: pointer;" 
+                         onclick="window.location.href='@Url.Action("Show", "Product", new { id = product.Id })'">
                         <div class="position-relative">
                             <img src="@product.ImageUrl" class="card-img-top" alt="@product.Title" 
                                  style="height: 250px; object-fit: cover;" 
@@ -235,13 +239,30 @@
                                     <i class="bi bi-box"></i> Stoc: @product.Stock
                                 </span>
                             </div>
-                            <div class="btn-group w-100" role="group">
-                                <a asp-action="Show" asp-route-id="@product.Id" 
-                                   class="btn btn-outline-info btn-sm">
-                                    <i class="bi bi-eye"></i> Detalii
-                                </a>
-                                @if (SignInManager.IsSignedIn(User) && (User.IsInRole("Admin") || canEditorManage))
-                                {
+                            
+                            @if (!isStaff && product.Status == (int)ProductStatus.Approved)
+                            {
+                                var isInWishlist = wishlistProductIds.Contains(product.Id);
+                                <div class="d-grid gap-2" onclick="event.stopPropagation();">
+                                    <form asp-controller="ShoppingCart" asp-action="Add" method="post" class="mb-0">
+                                        <input type="hidden" name="productId" value="@product.Id" />
+                                        <input type="hidden" name="quantity" value="1" />
+                                        <button type="submit" class="btn btn-success w-100" @(product.IsInStock ? "" : "disabled")>
+                                            <i class="bi bi-cart-plus"></i> Adaugă în coș
+                                        </button>
+                                    </form>
+                                    <form asp-controller="Wishlist" asp-action="Add" method="post" class="mb-0 wishlist-form" data-product-id="@product.Id">
+                                        <input type="hidden" name="productId" value="@product.Id" />
+                                        <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
+                                        <button type="submit" class="btn @(isInWishlist ? "btn-danger" : "btn-outline-danger") w-100 wishlist-btn">
+                                            <i class="bi @(isInWishlist ? "bi-heart-fill" : "bi-heart")"></i> <span class="wishlist-text">@(isInWishlist ? "În favorite" : "Adaugă la favorite")</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            }
+                            else if (SignInManager.IsSignedIn(User) && (User.IsInRole("Admin") || canEditorManage))
+                            {
+                                <div class="btn-group w-100" role="group" onclick="event.stopPropagation();">
                                     <a asp-action="Edit" asp-route-id="@product.Id" 
                                        class="btn btn-outline-warning btn-sm">
                                         <i class="bi bi-pencil"></i> Editează
@@ -251,8 +272,8 @@
                                             <i class="bi bi-trash"></i> Șterge
                                         </button>
                                     </form>
-                                }
-                            </div>
+                                </div>
+                            }
                         </div>
                     </div>
                 </div>
@@ -300,3 +321,55 @@
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
     }
 </style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const isAuthenticated = @(SignInManager.IsSignedIn(User) ? "true" : "false");
+    
+    document.querySelectorAll('.wishlist-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            // Dacă user-ul nu este autentificat, lasă form-ul să se submiteze normal (redirect către login)
+            if (!isAuthenticated) {
+                return;
+            }
+            
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const btn = this.querySelector('.wishlist-btn');
+            const icon = btn.querySelector('i');
+            const text = btn.querySelector('.wishlist-text');
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.isAdded) {
+                        // Produs adăugat la favorite
+                        btn.classList.remove('btn-outline-danger');
+                        btn.classList.add('btn-danger');
+                        icon.classList.remove('bi-heart');
+                        icon.classList.add('bi-heart-fill');
+                        text.textContent = 'În favorite';
+                    } else {
+                        // Produs șters din favorite
+                        btn.classList.remove('btn-danger');
+                        btn.classList.add('btn-outline-danger');
+                        icon.classList.remove('bi-heart-fill');
+                        icon.classList.add('bi-heart');
+                        text.textContent = 'Adaugă la favorite';
+                    }
+                }
+            })
+            .catch(error => console.error('Eroare:', error));
+        });
+    });
+});
+</script>

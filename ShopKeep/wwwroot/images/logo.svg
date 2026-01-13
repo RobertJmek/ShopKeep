@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 100" width="320" height="100">
+  <!-- Store/Shop icon -->
+  <g>
+    <!-- Roof/Awning -->
+    <path d="M10 30 L50 15 L90 30 L85 40 L50 30 L15 40 Z" fill="#2c3e50" stroke="#1a252f" stroke-width="2"/>
+    
+    <!-- Awning stripes -->
+    <rect x="20" y="30" width="8" height="10" fill="#e74c3c"/>
+    <rect x="35" y="30" width="8" height="10" fill="#e74c3c"/>
+    <rect x="50" y="27" width="8" height="13" fill="#e74c3c"/>
+    <rect x="65" y="30" width="8" height="10" fill="#e74c3c"/>
+    
+    <!-- Store front -->
+    <rect x="15" y="40" width="70" height="50" fill="#ecf0f1" stroke="#2c3e50" stroke-width="2.5"/>
+    
+    <!-- Door -->
+    <rect x="40" y="55" width="20" height="35" fill="#34495e" stroke="#2c3e50" stroke-width="1.5" rx="2"/>
+    <circle cx="54" cy="72" r="2" fill="#f39c12"/>
+    
+    <!-- Windows -->
+    <rect x="20" y="48" width="15" height="15" fill="#3498db" stroke="#2c3e50" stroke-width="1.5"/>
+    <line x1="27.5" y1="48" x2="27.5" y2="63" stroke="#2c3e50" stroke-width="1"/>
+    <line x1="20" y1="55.5" x2="35" y2="55.5" stroke="#2c3e50" stroke-width="1"/>
+    
+    <rect x="65" y="48" width="15" height="15" fill="#3498db" stroke="#2c3e50" stroke-width="1.5"/>
+    <line x1="72.5" y1="48" x2="72.5" y2="63" stroke="#2c3e50" stroke-width="1"/>
+    <line x1="65" y1="55.5" x2="80" y2="55.5" stroke="#2c3e50" stroke-width="1"/>
+  </g>
+  
+  <!-- ShopKeep Text -->
+  <text x="110" y="60" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#2c3e50">
+    ShopKeep
+  </text>
+</svg>

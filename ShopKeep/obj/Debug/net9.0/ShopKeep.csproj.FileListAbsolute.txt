@@ -253,3 +253,4 @@
 /Users/robertjmek/Desktop/UNI/DAW/ShopKeep/ShopKeep/obj/Debug/net9.0/compressed/yfc7ypekbg-mlv21k5csn.gz
 /Users/robertjmek/Desktop/UNI/DAW/ShopKeep/ShopKeep/bin/Debug/net9.0/SixLabors.ImageSharp.dll
 /Users/robertjmek/Desktop/UNI/DAW/ShopKeep/ShopKeep/obj/Debug/net9.0/compressed/2fre1uyvs8-3cpszpuruw.gz
+/Users/robertjmek/Desktop/UNI/DAW/ShopKeep/ShopKeep/obj/Debug/net9.0/compressed/bcbh7bkarl-8vveoybfp6.gz

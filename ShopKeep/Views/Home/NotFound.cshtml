@@ -1,0 +1,55 @@
+@{
+    ViewData["Title"] = "Pagină Negăsită";
+}
+
+<div class="container">
+    <div class="row justify-content-center align-items-center" style="min-height: 70vh;">
+        <div class="col-lg-6 text-center">
+            <!-- 404 Number -->
+            <div class="mb-4">
+                <h1 class="display-1 fw-bold" style="font-size: 10rem; line-height: 1; color: #dee2e6;">
+                    404
+                </h1>
+            </div>
+
+            <!-- Error Message -->
+            <h2 class="fw-bold mb-3">Pagină Negăsită</h2>
+            <p class="text-muted mb-4" style="font-size: 1.1rem;">
+                Ne pare rău, dar pagina pe care o cauți nu există sau a fost mutată.
+            </p>
+
+            <!-- Actions -->
+            <div class="d-flex gap-3 justify-content-center mb-5">
+                <a asp-controller="Home" asp-action="Index" class="btn btn-dark btn-lg rounded-pill px-4">
+                    <i class="bi bi-house-fill"></i> Acasă
+                </a>
+                <a asp-controller="Product" asp-action="Index" class="btn btn-outline-dark btn-lg rounded-pill px-4">
+                    <i class="bi bi-box-seam"></i> Produse
+                </a>
+            </div>
+
+            <!-- Helpful Links -->
+            <div class="mt-5">
+                <p class="text-muted small mb-3">Poate te interesează:</p>
+                <div class="d-flex gap-3 justify-content-center flex-wrap">
+                    <a asp-controller="Category" asp-action="Index" class="text-decoration-none text-muted small">
+                        Categorii
+                    </a>
+                    <span class="text-muted small">•</span>
+                    <a asp-controller="Home" asp-action="Privacy" class="text-decoration-none text-muted small">
+                        Confidențialitate
+                    </a>
+                    @if (User?.Identity?.IsAuthenticated == true)
+                    {
+                        <span class="text-muted small">•</span>
+                        <a asp-controller="Order" asp-action="Index" class="text-decoration-none text-muted small">
+                            Comenzile Mele
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
