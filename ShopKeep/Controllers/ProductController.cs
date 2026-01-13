@@ -54,16 +54,16 @@ namespace ShopKeep.Controllers
                 return false;
             }
 
-            // Editor can only manage their own proposals that are not approved yet
+            // Editor can only manage their own products (regardless of approval status)
             if (product.ProposedByUserId == null || product.ProposedByUserId != CurrentUserId)
             {
                 return false;
             }
 
-            return product.Status != (int)ProductStatus.Approved;
+            return true;
         }
 
-        public ActionResult Index(int? categoryId)
+        public ActionResult Index(int? categoryId, string? search, string? sortBy)
         {
             if (TempData.ContainsKey("message"))
             {
@@ -94,6 +94,15 @@ namespace ShopKeep.Controllers
                 productsQuery = productsQuery.Where(p => p.Status == (int)ProductStatus.Approved);
             }
 
+            // Search by product name (partial match)
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var searchTerm = search.Trim().ToLower();
+                productsQuery = productsQuery.Where(p => p.Title.ToLower().Contains(searchTerm));
+                ViewBag.SearchTerm = search;
+            }
+
+            // Filter by category
             if (categoryId.HasValue)
             {
                 productsQuery = productsQuery.Where(p => p.CategoryId == categoryId.Value);
@@ -108,7 +117,19 @@ namespace ShopKeep.Controllers
                 ViewBag.SelectedCategoryName = null;
             }
 
-            var products = productsQuery.OrderByDescending(p => p.Id).ToList();
+            // Convert to list before sorting by calculated properties
+            var products = productsQuery.ToList();
+
+            // Sort products
+            ViewBag.SortBy = sortBy;
+            products = sortBy switch
+            {
+                "price_asc" => products.OrderBy(p => p.Price).ToList(),
+                "price_desc" => products.OrderByDescending(p => p.Price).ToList(),
+                "rating_asc" => products.OrderBy(p => p.AverageRating).ToList(),
+                "rating_desc" => products.OrderByDescending(p => p.AverageRating).ToList(),
+                _ => products.OrderByDescending(p => p.Id).ToList()
+            };
             
             ViewBag.Products = products;
             return View();
@@ -118,6 +139,7 @@ namespace ShopKeep.Controllers
         {
             Product? product = db.Products
                 .Include(p => p.Category)
+                .Include(p => p.ProposedBy)
                 .Include(p => p.Reviews!)
                     .ThenInclude(r => r.User)
                 .FirstOrDefault(p => p.Id == id);

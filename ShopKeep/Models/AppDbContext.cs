@@ -22,6 +22,7 @@ namespace ShopKeep.Models
         public DbSet<Review> Reviews { get; set; } = default!;
         public DbSet<ShoppingCartItem> ShoppingCartItems { get; set; } = default!;
         public DbSet<WishlistItem> WishlistItems { get; set; } = default!;
+        public DbSet<ProductFAQ> ProductFAQs { get; set; } = default!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -45,12 +46,6 @@ namespace ShopKeep.Models
                 .HasForeignKey(p => p.ProposedByUserId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            builder.Entity<Product>()
-                .HasOne(p => p.Category)
-                .WithMany(c => c.Products)
-                .HasForeignKey(p => p.CategoryId)
-                .OnDelete(DeleteBehavior.Cascade);
-
             builder.Entity<Order>()
                 .HasOne(o => o.User)
                 .WithMany(u => u.Orders)
@@ -61,7 +56,7 @@ namespace ShopKeep.Models
                 .HasOne(oi => oi.Product)
                 .WithMany(p => p.OrderItems)
                 .HasForeignKey(oi => oi.ProductId)
-                .OnDelete(DeleteBehavior.SetNull);
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

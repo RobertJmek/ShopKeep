@@ -14,6 +14,10 @@
     try { selectedCategoryId = (int?)ViewBag.SelectedCategoryId; } catch { selectedCategoryId = null; }
     string? selectedCategoryName = null;
     try { selectedCategoryName = (string?)ViewBag.SelectedCategoryName; } catch { selectedCategoryName = null; }
+    string? searchTerm = null;
+    try { searchTerm = (string?)ViewBag.SearchTerm; } catch { searchTerm = null; }
+    string? sortBy = null;
+    try { sortBy = (string?)ViewBag.SortBy; } catch { sortBy = null; }
 
     IEnumerable<ShopKeep.Models.Category> allCategories = Enumerable.Empty<ShopKeep.Models.Category>();
     try { allCategories = (IEnumerable<ShopKeep.Models.Category>)ViewBag.AllCategories; } catch { allCategories = Enumerable.Empty<ShopKeep.Models.Category>(); }
@@ -27,13 +31,38 @@
             </h1>
             <p class="text-muted">Explorează gama noastră completă de produse</p>
 
-            @if (selectedCategoryId.HasValue)
+            @if (selectedCategoryId.HasValue || !string.IsNullOrWhiteSpace(searchTerm) || !string.IsNullOrWhiteSpace(sortBy))
             {
-                <div class="mt-2">
-                    <span class="badge text-bg-success">
-                        Filtru: @(string.IsNullOrWhiteSpace(selectedCategoryName) ? "Categorie" : selectedCategoryName)
-                    </span>
-                    <a class="ms-2 small text-decoration-none" asp-action="Index">Resetează filtrul</a>
+                <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
+                    @if (selectedCategoryId.HasValue)
+                    {
+                        <span class="badge text-bg-success">
+                            <i class="bi bi-funnel-fill"></i> Categorie: @(string.IsNullOrWhiteSpace(selectedCategoryName) ? "Necunoscută" : selectedCategoryName)
+                        </span>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(searchTerm))
+                    {
+                        <span class="badge text-bg-info">
+                            <i class="bi bi-search"></i> Căutare: "@searchTerm"
+                        </span>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(sortBy))
+                    {
+                        var sortLabel = sortBy switch
+                        {
+                            "price_asc" => "Preț crescător",
+                            "price_desc" => "Preț descrescător",
+                            "rating_asc" => "Rating crescător",
+                            "rating_desc" => "Rating descrescător",
+                            _ => ""
+                        };
+                        <span class="badge text-bg-warning text-dark">
+                            <i class="bi bi-sort-down"></i> Sortare: @sortLabel
+                        </span>
+                    }
+                    <a class="small text-decoration-none" asp-action="Index">
+                        <i class="bi bi-x-circle"></i> Resetează toate filtrele
+                    </a>
                 </div>
             }
         </div>
@@ -64,37 +93,67 @@
 
     <div class="card shadow-sm border-0 mb-4">
         <div class="card-body">
-            <form method="get" asp-action="Index" class="row g-2 align-items-end">
-                <div class="col-sm-8 col-md-5">
-                    <label class="form-label">Filtrează după categorie</label>
+            <h5 class="mb-3"><i class="bi bi-funnel"></i> Căutare și Filtrare</h5>
+            <form method="get" asp-action="Index" class="row g-3 align-items-end">
+                <!-- Căutare după denumire -->
+                <div class="col-sm-12 col-md-4">
+                    <label class="form-label">
+                        <i class="bi bi-search"></i> Caută după denumire
+                    </label>
+                    <input type="text" class="form-control" name="search" 
+                           value="@searchTerm" 
+                           placeholder="Ex: lapto, telefon, tabletă..." />
+                </div>
+
+                <!-- Filtrare după categorie -->
+                <div class="col-sm-12 col-md-3">
+                    <label class="form-label">
+                        <i class="bi bi-tag"></i> Categorie
+                    </label>
                     <select class="form-select" name="categoryId">
                         <option value="">Toate categoriile</option>
                         @foreach (var c in allCategories)
                         {
                             if (selectedCategoryId.HasValue && selectedCategoryId.Value == c.Id)
                             {
-                                <option value="@c.Id" selected>
-                                    @c.Name
-                                </option>
+                                <option value="@c.Id" selected>@c.Name</option>
                             }
                             else
                             {
-                                <option value="@c.Id">
-                                    @c.Name
-                                </option>
+                                <option value="@c.Id">@c.Name</option>
                             }
                         }
                     </select>
                 </div>
-                <div class="col-auto">
-                    <button type="submit" class="btn btn-outline-success">Filtrează</button>
+
+                <!-- Sortare -->
+                <div class="col-sm-12 col-md-3">
+                    <label class="form-label">
+                        <i class="bi bi-sort-down"></i> Sortare
+                    </label>
+                    <select class="form-select" name="sortBy">
+                        <option value="">Implicit (cele mai noi)</option>
+                        <option value="price_asc" selected="@(sortBy == "price_asc")">Preț: crescător</option>
+                        <option value="price_desc" selected="@(sortBy == "price_desc")">Preț: descrescător</option>
+                        <option value="rating_asc" selected="@(sortBy == "rating_asc")">Rating: crescător</option>
+                        <option value="rating_desc" selected="@(sortBy == "rating_desc")">Rating: descrescător</option>
+                    </select>
                 </div>
-                @if (selectedCategoryId.HasValue)
-                {
-                    <div class="col-auto">
-                        <a class="btn btn-outline-secondary" asp-action="Index">Resetează</a>
+
+                <!-- Butoane -->
+                <div class="col-sm-12 col-md-2">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success flex-grow-1">
+                            <i class="bi bi-search"></i> Aplică
+                        </button>
+                        @if (selectedCategoryId.HasValue || !string.IsNullOrWhiteSpace(searchTerm) || !string.IsNullOrWhiteSpace(sortBy))
+                        {
+                            <a class="btn btn-outline-secondary" asp-action="Index" title="Resetează">
+                                <i class="bi bi-x-lg"></i>
+                            </a>
+                        }
                     </div>
-                }
+                </div>
             </form>
         </div>
     </div>

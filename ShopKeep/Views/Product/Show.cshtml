@@ -14,8 +14,7 @@
     var canEditorManage = SignInManager.IsSignedIn(User)
         && User.IsInRole("Editor")
         && Model.ProposedByUserId != null
-        && Model.ProposedByUserId == currentUserId
-        && Model.Status != (int)ProductStatus.Approved;
+        && Model.ProposedByUserId == currentUserId;
     var canManage = SignInManager.IsSignedIn(User) && (User.IsInRole("Admin") || canEditorManage);
 
     var ratings = Model.Reviews
@@ -55,6 +54,21 @@
                     {
                         <div class="small mt-1"><span class="fw-semibold">Feedback Admin:</span> @Model.AdminFeedback</div>
                     }
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (User.IsInRole("Admin") && Model.ProposedBy != null)
+    {
+        <div class="alert alert-info shadow-sm">
+            <div class="d-flex align-items-start gap-2">
+                <i class="bi bi-person-badge fs-4"></i>
+                <div>
+                    <div class="fw-semibold">Propus de Editor</div>
+                    <div class="small mt-1">
+                        <strong>@Model.ProposedBy.FullName</strong> (@Model.ProposedBy.Email)
+                    </div>
                 </div>
             </div>
         </div>
@@ -313,7 +327,7 @@
                             {
                                 <div class="list-group-item px-0">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <div>
+                                        <div class="flex-grow-1">
                                             <strong>@review.User?.FullName</strong>
                                             <div class="text-warning">
                                                 @for (int i = 1; i <= 5; i++)
@@ -322,7 +336,25 @@
                                                 }
                                             </div>
                                         </div>
-                                        <small class="text-muted">@review.CreatedAt.ToString("dd MMM yyyy")</small>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <small class="text-muted">@review.CreatedAt.ToString("dd MMM yyyy")</small>
+                                            @if (User?.Identity?.IsAuthenticated == true && User.IsInRole("Admin"))
+                                            {
+                                                <details class="d-inline">
+                                                    <summary class="btn btn-sm btn-outline-danger" style="cursor: pointer; list-style: none;" title="Șterge review (Admin)">
+                                                        <i class="bi bi-trash"></i>
+                                                    </summary>
+                                                    <div class="alert alert-danger mt-2 mb-0 p-2 small" style="position: absolute; right: 0; z-index: 10; min-width: 250px;">
+                                                        <strong>Șterge review?</strong>
+                                                        <form asp-controller="Review" asp-action="Delete" asp-route-id="@review.Id" method="post" class="d-inline ms-2">
+                                                            <button type="submit" class="btn btn-danger btn-sm">
+                                                                <i class="bi bi-check"></i> Da, șterge
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                </details>
+                                            }
+                                        </div>
                                     </div>
                                     <p class="mb-0 text-muted">@review.Text</p>
                                 </div>
@@ -335,4 +367,341 @@
     </div>
 </div>
 
+<!-- Floating AI Chat Widget -->
+<div id="chatWidget" class="chat-widget">
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+                <i class="bi bi-robot"></i> Asistent AI
+            </h6>
+            <button id="closeChatBtn" class="btn btn-sm btn-link text-white p-0">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="card-body p-3" style="height: 400px; overflow-y: auto;" id="chatMessages">
+            <div class="text-center text-muted py-5">
+                <i class="bi bi-chat-dots fs-1"></i>
+                <p class="mt-2 small">Pune o întrebare despre acest produs!</p>
+            </div>
+        </div>
+        <div class="card-footer p-2">
+            <form id="chatForm" class="d-flex gap-2">
+                <input type="text" class="form-control form-control-sm" id="chatInput" 
+                       placeholder="Întreabă ceva..."
+                       autocomplete="off">
+                <button type="submit" class="btn btn-primary btn-sm" id="sendBtn">
+                    <i class="bi bi-send"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Floating Chat Button -->
+<button id="chatToggleBtn" class="chat-toggle-btn">
+    <i class="bi bi-chat-dots-fill"></i>
+</button>
+
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+<style>
+    /* Floating Chat Toggle Button */
+    .chat-toggle-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #0d6efd 0%, #0056b3 100%);
+        color: white;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
+        z-index: 1000;
+        transition: all 0.3s ease;
+    }
+    
+    .chat-toggle-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(13, 110, 253, 0.6);
+    }
+    
+    .chat-toggle-btn.hidden {
+        display: none;
+    }
+    
+    /* Chat Widget */
+    .chat-widget {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 380px;
+        max-width: calc(100vw - 60px);
+        z-index: 1001;
+        display: none;
+        animation: slideUp 0.3s ease;
+    }
+    
+    .chat-widget.active {
+        display: block;
+    }
+    
+    @@keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .chat-widget .card {
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    
+    .chat-widget .card-header {
+        padding: 0.75rem 1rem;
+        border-radius: 15px 15px 0 0;
+    }
+    
+    #closeChatBtn {
+        text-decoration: none;
+        font-size: 1.2rem;
+        opacity: 0.8;
+        transition: opacity 0.2s;
+    }
+    
+    #closeChatBtn:hover {
+        opacity: 1;
+    }
+    
+    /* Chat Messages */
+    .chat-message {
+        margin-bottom: 1rem;
+        animation: fadeIn 0.3s ease-in;
+        display: flex;
+    }
+    
+    .user-message {
+        justify-content: flex-end;
+    }
+    
+    .ai-message {
+        justify-content: flex-start;
+    }
+    
+    .chat-bubble {
+        padding: 0.6rem 0.9rem;
+        border-radius: 1rem;
+        max-width: 80%;
+        word-wrap: break-word;
+        font-size: 0.9rem;
+    }
+    
+    .user-message .chat-bubble {
+        background-color: #0d6efd;
+        color: white;
+        border-radius: 1rem 1rem 0.2rem 1rem;
+    }
+    
+    .ai-message .chat-bubble {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 1rem 1rem 1rem 0.2rem;
+    }
+    
+    .confidence-badge {
+        font-size: 0.65rem;
+        margin-top: 0.25rem;
+        padding-left: 0.5rem;
+    }
+    
+    @@keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    #chatMessages::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    #chatMessages::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    #chatMessages::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 10px;
+    }
+    
+    #chatMessages::-webkit-scrollbar-thumb:hover {
+        background: #999;
+    }
+    
+    /* Mobile Responsive */
+    @@media (max-width: 576px) {
+        .chat-widget {
+            width: calc(100vw - 40px);
+            right: 20px;
+            bottom: 20px;
+        }
+        
+        .chat-toggle-btn {
+            width: 50px;
+            height: 50px;
+            font-size: 1.2rem;
+            right: 20px;
+            bottom: 20px;
+        }
+    }
+</style>
+
+<script>
+    const productId = @Model.Id;
+    const chatMessages = document.getElementById('chatMessages');
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const chatToggleBtn = document.getElementById('chatToggleBtn');
+    const chatWidget = document.getElementById('chatWidget');
+    const closeChatBtn = document.getElementById('closeChatBtn');
+
+    // Toggle chat visibility
+    chatToggleBtn.addEventListener('click', () => {
+        chatWidget.classList.add('active');
+        chatToggleBtn.classList.add('hidden');
+        chatInput.focus();
+    });
+
+    closeChatBtn.addEventListener('click', () => {
+        chatWidget.classList.remove('active');
+        chatToggleBtn.classList.remove('hidden');
+    });
+
+    // Inițializare chat
+    let isFirstMessage = true;
+
+    chatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const question = chatInput.value.trim();
+        if (!question) return;
+
+        // Elimină mesajul de bun venit la primul mesaj
+        if (isFirstMessage) {
+            chatMessages.innerHTML = '';
+            isFirstMessage = false;
+        }
+
+        // Afișează întrebarea utilizatorului
+        addMessage(question, 'user');
+        chatInput.value = '';
+        chatInput.disabled = true;
+        sendBtn.disabled = true;
+
+        // Afișează indicator de loading
+        const loadingId = addLoadingMessage();
+
+        try {
+            const response = await fetch('/api/ProductAIChat/ask', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    productId: productId,
+                    question: question
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Eroare la comunicarea cu serverul');
+            }
+
+            const data = await response.json();
+            
+            // Elimină loading și afișează răspunsul
+            removeLoadingMessage(loadingId);
+            addMessage(data.answer, 'ai', data.source, data.confidence);
+
+        } catch (error) {
+            console.error('Eroare:', error);
+            removeLoadingMessage(loadingId);
+            addMessage('Ne cerem scuze, a apărut o eroare. Vă rugăm încercați din nou.', 'ai', 'error', 'low');
+        } finally {
+            chatInput.disabled = false;
+            sendBtn.disabled = false;
+            chatInput.focus();
+        }
+    });
+
+    function addMessage(text, type, source = '', confidence = '') {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `chat-message ${type}-message`;
+        
+        const bubbleDiv = document.createElement('div');
+        bubbleDiv.className = 'chat-bubble';
+        bubbleDiv.textContent = text;
+        
+        messageDiv.appendChild(bubbleDiv);
+        
+        // Adaugă badge-uri pentru mesajele AI
+        if (type === 'ai' && source) {
+            const badgeDiv = document.createElement('div');
+            badgeDiv.className = 'confidence-badge';
+            
+            const sourceIcon = source === 'faq' ? 'database-check' : 
+                              source === 'description' ? 'file-text' : 
+                              'info-circle';
+            
+            const sourceText = source === 'faq' ? 'Din FAQ' : 
+                              source === 'description' ? 'Din descriere' : 
+                              'Răspuns general';
+            
+            const confidenceColor = confidence === 'high' ? 'success' : 
+                                   confidence === 'medium' ? 'info' : 
+                                   'secondary';
+            
+            badgeDiv.innerHTML = `
+                <span class="badge bg-${confidenceColor}-subtle text-${confidenceColor}">
+                    <i class="bi bi-${sourceIcon}"></i> ${sourceText}
+                </span>
+            `;
+            
+            messageDiv.appendChild(badgeDiv);
+        }
+        
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function addLoadingMessage() {
+        const loadingId = 'loading-' + Date.now();
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'chat-message ai-message';
+        messageDiv.id = loadingId;
+        
+        const bubbleDiv = document.createElement('div');
+        bubbleDiv.className = 'chat-bubble';
+        bubbleDiv.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Gândesc...';
+        
+        messageDiv.appendChild(bubbleDiv);
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        return loadingId;
+    }
+
+    function removeLoadingMessage(loadingId) {
+        const loadingMsg = document.getElementById(loadingId);
+        if (loadingMsg) {
+            loadingMsg.remove();
+        }
+    }
+</script>
